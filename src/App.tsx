@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import viteLogo from '/sb-logo.png'
+// import { useState } from 'react'
+// import viteLogo from '/sb-logo.png'
 import './App.css'
 import Timer from './components/organisms/timer'
 
