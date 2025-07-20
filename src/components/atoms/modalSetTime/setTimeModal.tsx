@@ -45,7 +45,11 @@ const TimeModal: React.FC<TimeModalProps> = ({ isOpen, onClose, time, setTime })
       <div className={"modal"} ref={modalRef} tabIndex={-1}>
         <h2>Select Time</h2>
         <TimePicker
-          onChange={setTime}
+          onChange={(value) => {
+            if (value !== null) {
+              setTime(value);
+            }
+          }}
           value={time}
           disableClock={true}
           format="HH:mm"

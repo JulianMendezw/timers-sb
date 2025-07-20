@@ -4,7 +4,6 @@ import './App.css'
 import Timer from './components/organisms/timer'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
