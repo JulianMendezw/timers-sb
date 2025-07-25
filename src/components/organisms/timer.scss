@@ -1,9 +1,65 @@
-.kernel, .evals, .metalDetector, .samples{
+.kernel,
+.evals,
+.metalDetector,
+.samples {
     display: flex;
     width: 100%;
-    
+
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+
+    h2 {
+        width: 80%;
+        margin: 0;
+        margin-right: 20px;
+        font-size: 20px;
+        font-weight: 100;
+        text-align: left;
+    }
+
+    p {
+        font-size: 25px;
+        font-weight: 400;
+        letter-spacing: 2px;
+        margin: 0;
+        margin-right: 10px;
+    }
+
+    button {
+        width: 60px; // o el tamaño que necesites
+        height: 30px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #1e1e1e; // o el color oscuro que estés usando
+        border: none;
+        border-radius: 12px; // opcional, para esquinas redondeadas
+        cursor: pointer;
+
+
+    }
+}
+
+.animated-time {
+    font-size: 2rem;
+    color: white;
+
+    .blinking-colon {
+        animation: blink 2.5s infinite;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+    }
 }

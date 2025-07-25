@@ -51,6 +51,17 @@ const Timer: React.FC = () => {
 
         setNextTime(formattedTime);
     };
+    const timeSplited = (time: string) => {
+        const [hours, minutes] = time.split(':');
+        return (
+            <p className="animated-time">
+                {hours}
+                <span className="blinking-colon">:</span>
+                {minutes}
+            </p>
+        );
+    };
+
 
 
     return <div>
@@ -58,8 +69,8 @@ const Timer: React.FC = () => {
             <TimeModal isOpen={modalIsOpen} onClose={() => onModalClose()} setTime={setTime} time={time} />
             <div className="kernel">
                 <h2>Kernel:</h2>
-                <p>{kernelTime}</p>
-                <button onClick={() => {setActiveTimer('kernel'), setTime(kernelTime), setModalIsOpen(true) }} >
+                <p>{timeSplited(kernelTime)}</p>
+                <button onClick={() => { setActiveTimer('kernel'), setTime(kernelTime), setModalIsOpen(true) }} >
                     <CiAlarmOn />
                 </button>
                 <button onClick={() => nextTest(40, kernelTime, setKernelTime)}>
@@ -68,7 +79,7 @@ const Timer: React.FC = () => {
             </div>
             <div className="evals">
                 <h2>Evals:</h2>
-                <p>{evalsTime}</p>
+                <p>{timeSplited(evalsTime)}</p>
                 <button onClick={() => { setActiveTimer('evals'), setTime(evalsTime), setModalIsOpen(true) }} >
                     <CiAlarmOn />
                 </button>
@@ -78,8 +89,8 @@ const Timer: React.FC = () => {
             </div>
             <div className="metalDetector">
                 <h2>Metal & Grind:</h2>
-                <p>{mdTime}</p>
-                <button onClick={() => {setActiveTimer('md'), setTime(mdTime), setModalIsOpen(true) }} >
+                <p>{timeSplited(mdTime)}</p>
+                <button onClick={() => { setActiveTimer('md'), setTime(mdTime), setModalIsOpen(true) }} >
                     <CiAlarmOn />
                 </button>
                 <button onClick={() => nextTest(110, mdTime, setMdTime)}>
@@ -88,7 +99,7 @@ const Timer: React.FC = () => {
             </div>
             <div className="samples">
                 <h2>Samples:</h2>
-                <p>{samplesTime}</p>
+                <p>{timeSplited(samplesTime)}</p>
                 <button onClick={() => { setActiveTimer('samples'), setTime(samplesTime), setModalIsOpen(true) }} >
                     <CiAlarmOn />
                 </button>
@@ -98,7 +109,6 @@ const Timer: React.FC = () => {
             </div>
 
         </div>
-        {/* Timer functionality will be implemented here */}
     </div>;
 };
 
