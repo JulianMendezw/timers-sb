@@ -24,7 +24,6 @@
         font-weight: 400;
         letter-spacing: 2px;
         margin: 0;
-        margin-right: 10px;
     }
 
     button {
@@ -38,8 +37,24 @@
         border: none;
         border-radius: 12px; // opcional, para esquinas redondeadas
         cursor: pointer;
+    }
 
+    .time-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
+        svg {
+            width: 20px;
+            height: 20px;
+            opacity: 0.4;
+        }
+
+        .animated-time {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
     }
 }
 
@@ -52,14 +67,12 @@
     }
 
     @keyframes blink {
-
         0%,
         100% {
             opacity: 1;
         }
-
         50% {
-            opacity: 0;
+            opacity: 0.2;
         }
     }
 }
