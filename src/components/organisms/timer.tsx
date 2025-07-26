@@ -11,7 +11,7 @@ const Timer: React.FC = () => {
     const [evalsTime, setEvalsTime] = React.useState('00:00');
     const [samplesTime, setSamplesTime] = React.useState('00:00');
     const [kernelTime, setKernelTime] = React.useState('00:00');
-    const [modalIsOpen, setModalIsOpen] = React.useState(true);
+    const [modalIsOpen, setModalIsOpen] = React.useState(false);
     const [nextDisplayTime, setNextDisplayTime] = useState<{ label: string; time: string } | null>(null);
     const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
 
