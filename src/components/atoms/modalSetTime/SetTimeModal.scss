@@ -12,7 +12,13 @@
 }
 
 .modal {
-  background: white;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: black;
+    color: white;
+  }
+
+  background-color: white;
   padding: 2rem;
   border-radius: 8px;
   width: 300px;
@@ -34,7 +40,15 @@
   button {
     flex: 1;
     padding: 0.5rem;
+    margin-top: 20px;
     font-size: 1rem;
     cursor: pointer;
   }
+
+}
+
+.react-time-picker__wrapper {
+  border: red;
+  margin: 10px;
+  font-size: 20px;
 }
