@@ -96,12 +96,6 @@ const Timer: React.FC = () => {
 
     return <div>
         <div className="timer-controls">
-            {nextDisplayTime && (
-                <div className="next-time-display">
-                    <h3>Next Scheduled Test:</h3>
-                    <p>{nextDisplayTime.label}: {nextDisplayTime.time}</p>
-                </div>
-            )}
             <TimeModal isOpen={modalIsOpen} onClose={() => onModalClose()} setTime={setTime} time={time} />
             <div className="kernel">
                 <h2>Kernel:</h2>
