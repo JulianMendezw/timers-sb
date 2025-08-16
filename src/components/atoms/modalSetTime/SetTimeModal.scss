@@ -12,17 +12,17 @@
 }
 
 .modal {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
 
   @media (prefers-color-scheme: dark) {
     background-color: black;
     color: white;
   }
 
-  background-color: white;
-  padding: 2rem;
-  border-radius: 8px;
-  width: 300px;
-  text-align: center;
 }
 
 .input {
