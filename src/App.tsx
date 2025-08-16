@@ -12,7 +12,7 @@ function App() {
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
       </div> */}
-      <h1>Timers SB</h1>
+      <h1>QA Timers SB</h1>
       <div className="card">
         <Timer />
       </div>
