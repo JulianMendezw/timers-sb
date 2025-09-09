@@ -1,63 +1,72 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './SetTimeModal.scss';
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 
-
 interface TimeModalProps {
+  name: 'kernel' | 'evals' | 'md' | 'samples' | null;
   isOpen: boolean;
-  onClose: () => void;
-  time: string;
-  setTime: (time: string) => void;
+  initialTime: string;                 // valor inicial al abrir
+  onSave: (value: string) => void;     // confirmar y devolver el valor
+  onCancel: () => void;                // cancelar sin modificar el padre
 }
 
-const TimeModal: React.FC<TimeModalProps> = ({ isOpen, onClose, time, setTime }) => {
+const TimeModal: React.FC<TimeModalProps> = ({ name, isOpen, initialTime, onSave, onCancel }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [local, setLocal] = useState<string>(initialTime ?? '');
+
+  // Resetear el valor local cada vez que abrimos o cambia el initialTime
+  useEffect(() => {
+    if (isOpen) setLocal(initialTime ?? '');
+  }, [isOpen, initialTime]);
 
   const handleSubmit = () => {
-    onClose();
+    if (local && /^\d{1,2}:\d{2}$/.test(local)) onSave(local);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
+    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Escape') onCancel();
   };
 
   useEffect(() => {
     const modalEl = modalRef.current;
     if (modalEl) {
-      modalEl.addEventListener('keydown', handleKeyDown);
-      modalEl.focus(); // to make sure it's focused
+      modalEl.addEventListener('keydown', handleKeyDown as any);
+      modalEl.focus();
     }
-
     return () => {
-      modalEl?.removeEventListener('keydown', handleKeyDown);
+      modalEl?.removeEventListener('keydown', handleKeyDown as any);
     };
   }, []);
 
   if (!isOpen) return null;
 
-
   return (
-    <div className={"overlay"}>
-      <div className={"modal"} ref={modalRef} tabIndex={-1}>
-        <h2>Select Time</h2>
+    <div className="overlay">
+      <div className="modal" ref={modalRef} tabIndex={-1}>
+        <h2>{name === 'md' ? 'METAL AND GRIND' : name?.toUpperCase()}</h2>
+        <p>Select Time</p>
+
         <TimePicker
           onChange={(value) => {
-            if (value !== null) {
-              setTime(value);
-            }
+            if (value !== null) setLocal(String(value));
           }}
-          value={time}
+          value={local}
           disableClock={true}
-          format="HH:mm"
+          format="HH:mm"          // Mantén 24h aquí si no quieres manejar AM/PM del picker
           clearIcon={null}
         />
-        <div className={"buttons"}>
-          <button onClick={handleSubmit}>Set</button>
-          <button onClick={onClose}>Cancel</button>
+
+        <div className="buttons">
+          <button
+            onClick={handleSubmit}
+            disabled={!local || !/^\d{1,2}:\d{2}$/.test(local)}
+          >
+            Set
+          </button>
+          <button onClick={onCancel}>Cancel</button>
         </div>
       </div>
     </div>

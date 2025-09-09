@@ -1,33 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { CiAlarmOn, CiRedo } from "react-icons/ci";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
+import './timer.scss';
 import TimeModal from '../atoms/modalSetTime/setTimeModal';
+
 import {
     normalizeHHMM12,
     inferNextPhase,
     minutesUntilNextWithPhase,
     addMinutesWithPhase,
 } from '../../utils/timeUtils';
-import './timer.scss';
-
 
 const Timer: React.FC = () => {
-    const [time, setTime] = useState('00:00');
-
     const [mdTime, setMdTime] = useState('00:00');
     const [evalsTime, setEvalsTime] = useState('00:00');
     const [samplesTime, setSamplesTime] = useState('00:00');
     const [kernelTime, setKernelTime] = useState('00:00');
+
     const [kernelAM, setKernelAM] = useState<boolean | null>(null);
     const [evalsAM, setEvalsAM] = useState<boolean | null>(null);
     const [mdAM, setMdAM] = useState<boolean | null>(null);
     const [samplesAM, setSamplesAM] = useState<boolean | null>(null);
+
     const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
+    const [draftTime, setDraftTime] = useState(''); // estado local para el modal
+
     const [nextDisplayTime, setNextDisplayTime] = useState<{
         label: 'kernel' | 'evals' | 'md' | 'samples';
         time: string;
     } | null>(null);
-    const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
+
     const [dueTimers, setDueTimers] = useState<string[]>([]);
 
     const timeSplited = (t: string, highlight: boolean = false, ampm?: boolean | null) => {
@@ -37,13 +40,19 @@ const Timer: React.FC = () => {
                 {hours}
                 <span className="blinking-colon">:</span>
                 {minutes}
-                {ampm != null && <sup className="ampm-badge">{ampm ? '' : ''}</sup>}
+                {ampm != null && <sup className="ampm-badge">{ampm ? 'AM' : 'PM'}</sup>}
             </p>
         );
     };
 
-    const onModalClose = () => {
-        const t12 = normalizeHHMM12(time);
+    const openModal = (label: 'kernel' | 'evals' | 'md' | 'samples', current: string) => {
+        setActiveTimer(label);
+        setDraftTime(current);
+        setModalIsOpen(true);
+    };
+
+    const handleSaveFromModal = (value: string) => {
+        const t12 = normalizeHHMM12(value);
         const phase = inferNextPhase(t12);
 
         if (activeTimer === 'kernel') {
@@ -64,6 +73,11 @@ const Timer: React.FC = () => {
             setDueTimers(prev => prev.filter(label => label !== 'samples'));
         }
 
+        setActiveTimer(null);
+        setModalIsOpen(false);
+    };
+
+    const handleCancelFromModal = () => {
         setActiveTimer(null);
         setModalIsOpen(false);
     };
@@ -144,6 +158,7 @@ const Timer: React.FC = () => {
 
             candidates.sort((a, b) => {
                 if (a.delta !== b.delta) return a.delta - b.delta;
+                // Prioridad especial: md > otros cuando empatan
                 if (a.label === 'md' && b.label !== 'md') return -1;
                 if (b.label === 'md' && a.label !== 'md') return 1;
                 return 0;
@@ -155,14 +170,16 @@ const Timer: React.FC = () => {
         getNextTimeWithPriority();
     }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
 
+    /* ------------------- Render ------------------- */
     return (
         <div>
             <div className="timer-controls">
                 <TimeModal
+                    name={activeTimer}
                     isOpen={modalIsOpen}
-                    onClose={() => onModalClose()}
-                    setTime={setTime}
-                    time={time}
+                    initialTime={draftTime}
+                    onCancel={handleCancelFromModal}
+                    onSave={handleSaveFromModal}
                 />
 
                 {/* Kernel */}
@@ -177,7 +194,7 @@ const Timer: React.FC = () => {
                             style={{ visibility: nextDisplayTime?.label === "kernel" ? "visible" : "hidden" }}
                         />
                     </div>
-                    <button onClick={() => { setActiveTimer('kernel'); setTime(kernelTime); setModalIsOpen(true); }}>
+                    <button onClick={() => openModal('kernel', kernelTime)}>
                         <CiAlarmOn />
                     </button>
                     <button
@@ -201,7 +218,7 @@ const Timer: React.FC = () => {
                             style={{ visibility: nextDisplayTime?.label === "evals" ? "visible" : "hidden" }}
                         />
                     </div>
-                    <button onClick={() => { setActiveTimer('evals'); setTime(evalsTime); setModalIsOpen(true); }}>
+                    <button onClick={() => openModal('evals', evalsTime)}>
                         <CiAlarmOn />
                     </button>
                     <button
@@ -225,7 +242,7 @@ const Timer: React.FC = () => {
                             style={{ visibility: nextDisplayTime?.label === "md" ? "visible" : "hidden" }}
                         />
                     </div>
-                    <button onClick={() => { setActiveTimer('md'); setTime(mdTime); setModalIsOpen(true); }}>
+                    <button onClick={() => openModal('md', mdTime)}>
                         <CiAlarmOn />
                     </button>
                     <button
@@ -249,7 +266,7 @@ const Timer: React.FC = () => {
                             style={{ visibility: nextDisplayTime?.label === "samples" ? "visible" : "hidden" }}
                         />
                     </div>
-                    <button onClick={() => { setActiveTimer('samples'); setTime(samplesTime); setModalIsOpen(true); }}>
+                    <button onClick={() => openModal('samples', samplesTime)}>
                         <CiAlarmOn />
                     </button>
                     <button
