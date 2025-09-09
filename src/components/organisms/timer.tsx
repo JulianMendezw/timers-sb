@@ -37,7 +37,7 @@ const Timer: React.FC = () => {
                 {hours}
                 <span className="blinking-colon">:</span>
                 {minutes}
-                {/* {ampm != null && <sup className="ampm-badge">{ampm ? 'AM' : 'PM'}</sup>} */}
+                {ampm != null && <sup className="ampm-badge">{ampm ? '' : ''}</sup>}
             </p>
         );
     };
