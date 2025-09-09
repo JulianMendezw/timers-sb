@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CiAlarmOn, CiRedo } from "react-icons/ci";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
-import './timer.scss';
 import TimeModal from '../atoms/modalSetTime/setTimeModal';
+import './timer.scss';
 
 import {
     normalizeHHMM12,
@@ -24,7 +24,7 @@ const Timer: React.FC = () => {
 
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
-    const [draftTime, setDraftTime] = useState(''); // estado local para el modal
+    const [draftTime, setDraftTime] = useState('');
 
     const [nextDisplayTime, setNextDisplayTime] = useState<{
         label: 'kernel' | 'evals' | 'md' | 'samples';
@@ -40,7 +40,7 @@ const Timer: React.FC = () => {
                 {hours}
                 <span className="blinking-colon">:</span>
                 {minutes}
-                {ampm != null && <sup className="ampm-badge">{ampm ? 'AM' : 'PM'}</sup>}
+                {ampm != null && <sup className="ampm-badge">{ampm ? '' : ''}</sup>}
             </p>
         );
     };
@@ -158,7 +158,6 @@ const Timer: React.FC = () => {
 
             candidates.sort((a, b) => {
                 if (a.delta !== b.delta) return a.delta - b.delta;
-                // Prioridad especial: md > otros cuando empatan
                 if (a.label === 'md' && b.label !== 'md') return -1;
                 if (b.label === 'md' && a.label !== 'md') return 1;
                 return 0;
@@ -170,7 +169,6 @@ const Timer: React.FC = () => {
         getNextTimeWithPriority();
     }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
 
-    /* ------------------- Render ------------------- */
     return (
         <div>
             <div className="timer-controls">
