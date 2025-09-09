@@ -1,33 +1,66 @@
 import React, { useEffect, useState } from 'react';
 import { CiAlarmOn, CiRedo } from "react-icons/ci";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
-import './timer.scss';
 import TimeModal from '../atoms/modalSetTime/setTimeModal';
+import {
+    normalizeHHMM12,
+    inferNextPhase,
+    minutesUntilNextWithPhase,
+    addMinutesWithPhase,
+} from '../../utils/timeUtils';
+import './timer.scss';
+
 
 const Timer: React.FC = () => {
-
     const [time, setTime] = useState('00:00');
-    const [mdTime, setMdTime] = React.useState('00:00');
-    const [evalsTime, setEvalsTime] = React.useState('00:00');
-    const [samplesTime, setSamplesTime] = React.useState('00:00');
-    const [kernelTime, setKernelTime] = React.useState('00:00');
-    const [modalIsOpen, setModalIsOpen] = React.useState(false);
-    const [nextDisplayTime, setNextDisplayTime] = useState<{ label: string; time: string } | null>(null);
-    const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
 
+    const [mdTime, setMdTime] = useState('00:00');
+    const [evalsTime, setEvalsTime] = useState('00:00');
+    const [samplesTime, setSamplesTime] = useState('00:00');
+    const [kernelTime, setKernelTime] = useState('00:00');
+    const [kernelAM, setKernelAM] = useState<boolean | null>(null);
+    const [evalsAM, setEvalsAM] = useState<boolean | null>(null);
+    const [mdAM, setMdAM] = useState<boolean | null>(null);
+    const [samplesAM, setSamplesAM] = useState<boolean | null>(null);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [nextDisplayTime, setNextDisplayTime] = useState<{
+        label: 'kernel' | 'evals' | 'md' | 'samples';
+        time: string;
+    } | null>(null);
+    const [activeTimer, setActiveTimer] = useState<'kernel' | 'evals' | 'md' | 'samples' | null>(null);
+    const [dueTimers, setDueTimers] = useState<string[]>([]);
+
+    const timeSplited = (t: string, highlight: boolean = false, ampm?: boolean | null) => {
+        const [hours, minutes] = t.split(':');
+        return (
+            <p className={`animated-time ${highlight ? 'highlight-red' : ''}`}>
+                {hours}
+                <span className="blinking-colon">:</span>
+                {minutes}
+                {/* {ampm != null && <sup className="ampm-badge">{ampm ? 'AM' : 'PM'}</sup>} */}
+            </p>
+        );
+    };
 
     const onModalClose = () => {
+        const t12 = normalizeHHMM12(time);
+        const phase = inferNextPhase(t12);
+
         if (activeTimer === 'kernel') {
-            setKernelTime(time);
+            setKernelTime(t12);
+            setKernelAM(phase);
             setDueTimers(prev => prev.filter(label => label !== 'kernel'));
         } else if (activeTimer === 'evals') {
-            setEvalsTime(time);
+            setEvalsTime(t12);
+            setEvalsAM(phase);
             setDueTimers(prev => prev.filter(label => label !== 'evals'));
         } else if (activeTimer === 'md') {
-            setMdTime(time);
+            setMdTime(t12);
+            setMdAM(phase);
             setDueTimers(prev => prev.filter(label => label !== 'md'));
         } else if (activeTimer === 'samples') {
-            setSamplesTime(time);
+            setSamplesTime(t12);
+            setSamplesAM(phase);
             setDueTimers(prev => prev.filter(label => label !== 'samples'));
         }
 
@@ -35,190 +68,201 @@ const Timer: React.FC = () => {
         setModalIsOpen(false);
     };
 
-
     const nextTest = (
         minutesToAdd: number,
-        currentTime: string,
+        currentHHMM: string,
         setNextTime: React.Dispatch<React.SetStateAction<string>>,
-        label: 'kernel' | 'evals' | 'md' | 'samples'
+        label: 'kernel' | 'evals' | 'md' | 'samples',
+        phaseGetter: () => boolean | null,
+        phaseSetter: (v: boolean) => void
     ) => {
-        const [hourStr, minuteStr] = currentTime.split(':');
-        let hour = parseInt(hourStr, 10);
-        let minute = parseInt(minuteStr, 10);
+        const baseHHMM = normalizeHHMM12(currentHHMM);
+        const existingPhase = phaseGetter();
+        const effectivePhase = (existingPhase == null) ? inferNextPhase(baseHHMM) : existingPhase;
 
-        const totalMinutes = hour * 60 + minute + minutesToAdd;
-        let newHour = Math.floor(totalMinutes / 60);
-        let newMinute = totalMinutes % 60;
+        const { newHHMM, newIsAM } = addMinutesWithPhase(baseHHMM, effectivePhase, minutesToAdd);
 
-        newHour = newHour % 12;
-        if (newHour === 0) newHour = 12;
+        setNextTime(newHHMM);
+        phaseSetter(newIsAM);
 
-        const formattedTime = `${newHour.toString().padStart(2, '0')}:${newMinute
-            .toString()
-            .padStart(2, '0')}`;
-
-        setNextTime(formattedTime);
-
-        // Remove from dueTimers
         setDueTimers(prev => prev.filter(item => item !== label));
     };
-
-    const timeSplited = (time: string, highlight: boolean = false) => {
-        const [hours, minutes] = time.split(':');
-        return (
-            <p className={`animated-time ${highlight ? 'highlight-red' : ''}`}>
-                {hours}
-                <span className="blinking-colon">:</span>
-                {minutes}
-            </p>
-        );
-    };
-
-
-    const [dueTimers, setDueTimers] = useState<string[]>([]);
 
     useEffect(() => {
         const checkDueTimers = () => {
             const now = new Date();
-            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const twelveHour = (hours % 12) || 12;
+            const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            const currentIsAM = hours < 12;
 
             setDueTimers(prev => {
-                const newDue = [...prev];
+                const next = [...prev];
 
-                if (kernelTime === currentTime && !prev.includes('kernel')) newDue.push('kernel');
-                if (evalsTime === currentTime && !prev.includes('evals')) newDue.push('evals');
-                if (mdTime === currentTime && !prev.includes('md')) newDue.push('md');
-                if (samplesTime === currentTime && !prev.includes('samples')) newDue.push('samples');
+                const pushIfDue = (label: 'kernel' | 'evals' | 'md' | 'samples', t: string, phase: boolean | null) => {
+                    if (!t || phase == null) return;
+                    if (t === currentTime && phase === currentIsAM && !next.includes(label)) next.push(label);
+                };
 
-                return newDue;
+                pushIfDue('kernel', kernelTime, kernelAM);
+                pushIfDue('evals', evalsTime, evalsAM);
+                pushIfDue('md', mdTime, mdAM);
+                pushIfDue('samples', samplesTime, samplesAM);
+
+                return next;
             });
         };
 
         checkDueTimers();
         const interval = setInterval(checkDueTimers, 60000);
         return () => clearInterval(interval);
-    }, [kernelTime, evalsTime, mdTime, samplesTime]);
 
-
+    }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
 
     useEffect(() => {
         const getNextTimeWithPriority = () => {
-            const times = [
-                { label: 'kernel', time: kernelTime },
-                { label: 'evals', time: evalsTime },
-                { label: 'md', time: mdTime }
+            const now = new Date();
+            const items = [
+                { label: 'kernel' as const, time: kernelTime, phase: kernelAM },
+                { label: 'evals' as const, time: evalsTime, phase: evalsAM },
+                { label: 'md' as const, time: mdTime, phase: mdAM },
+                { label: 'samples' as const, time: samplesTime, phase: samplesAM },
             ];
 
-            const toMinutes = (time: string) => {
-                const [hourStr, minuteStr] = time.split(':');
-                return parseInt(hourStr, 10) * 60 + parseInt(minuteStr, 10);
-            };
+            const candidates = items
+                .filter(i => i.time && /^\d{1,2}:\d{2}$/.test(i.time) && i.phase !== null)
+                .map(i => ({
+                    ...i,
+                    delta: minutesUntilNextWithPhase(normalizeHHMM12(i.time), i.phase as boolean, now),
+                }));
 
-            const sortedTimes = times.sort((a, b) => {
-                const aMinutes = toMinutes(a.time);
-                const bMinutes = toMinutes(b.time);
+            if (candidates.length === 0) {
+                setNextDisplayTime(null);
+                return;
+            }
 
-                if (aMinutes === bMinutes) {
-                    if (a.label === 'md') return -1;
-                    if (b.label === 'md') return 1;
-                }
-
-                return aMinutes - bMinutes;
+            candidates.sort((a, b) => {
+                if (a.delta !== b.delta) return a.delta - b.delta;
+                if (a.label === 'md' && b.label !== 'md') return -1;
+                if (b.label === 'md' && a.label !== 'md') return 1;
+                return 0;
             });
 
-            setNextDisplayTime(sortedTimes[0]);
+            setNextDisplayTime({ label: candidates[0].label, time: candidates[0].time });
         };
 
         getNextTimeWithPriority();
-    }, [kernelTime, evalsTime, mdTime]);
+    }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
 
-    return <div>
-        <div className="timer-controls">
-            <TimeModal isOpen={modalIsOpen} onClose={() => onModalClose()} setTime={setTime} time={time} />
-            <div className="kernel">
-                <h2>Kernel:</h2>
-                <div className="time-display">
-                    <MdKeyboardArrowRight
-                        style={{ visibility: nextDisplayTime?.label === "kernel" ? "visible" : "hidden" }}
-                    />
-                    {timeSplited(kernelTime, dueTimers.includes('kernel'))}
-                    <MdKeyboardArrowLeft
-                        style={{ visibility: nextDisplayTime?.label === "kernel" ? "visible" : "hidden" }}
-                    />
+    return (
+        <div>
+            <div className="timer-controls">
+                <TimeModal
+                    isOpen={modalIsOpen}
+                    onClose={() => onModalClose()}
+                    setTime={setTime}
+                    time={time}
+                />
+
+                {/* Kernel */}
+                <div className="kernel">
+                    <h2>Kernel:</h2>
+                    <div className="time-display">
+                        <MdKeyboardArrowRight
+                            style={{ visibility: nextDisplayTime?.label === "kernel" ? "visible" : "hidden" }}
+                        />
+                        {timeSplited(kernelTime, dueTimers.includes('kernel'), kernelAM)}
+                        <MdKeyboardArrowLeft
+                            style={{ visibility: nextDisplayTime?.label === "kernel" ? "visible" : "hidden" }}
+                        />
+                    </div>
+                    <button onClick={() => { setActiveTimer('kernel'); setTime(kernelTime); setModalIsOpen(true); }}>
+                        <CiAlarmOn />
+                    </button>
+                    <button
+                        onClick={() =>
+                            nextTest(40, kernelTime, setKernelTime, 'kernel', () => kernelAM, v => setKernelAM(v))
+                        }
+                    >
+                        <CiRedo />
+                    </button>
                 </div>
-                <button onClick={() => { setActiveTimer('kernel'); setTime(kernelTime); setModalIsOpen(true); }}>
-                    <CiAlarmOn />
-                </button>
 
-                <button onClick={() => nextTest(40, kernelTime, setKernelTime, 'kernel')}>
-
-                    <CiRedo />
-                </button>
-            </div>
-
-            <div className="evals">
-                <h2>Evals:</h2>
-                <div className="time-display">
-                    <MdKeyboardArrowRight
-                        style={{ visibility: nextDisplayTime?.label === "evals" ? "visible" : "hidden" }}
-                    />
-                    {timeSplited(evalsTime, dueTimers.includes('evals'))}
-
-                    <MdKeyboardArrowLeft
-                        style={{ visibility: nextDisplayTime?.label === "evals" ? "visible" : "hidden" }}
-                    />
+                {/* Evals */}
+                <div className="evals">
+                    <h2>Evals:</h2>
+                    <div className="time-display">
+                        <MdKeyboardArrowRight
+                            style={{ visibility: nextDisplayTime?.label === "evals" ? "visible" : "hidden" }}
+                        />
+                        {timeSplited(evalsTime, dueTimers.includes('evals'), evalsAM)}
+                        <MdKeyboardArrowLeft
+                            style={{ visibility: nextDisplayTime?.label === "evals" ? "visible" : "hidden" }}
+                        />
+                    </div>
+                    <button onClick={() => { setActiveTimer('evals'); setTime(evalsTime); setModalIsOpen(true); }}>
+                        <CiAlarmOn />
+                    </button>
+                    <button
+                        onClick={() =>
+                            nextTest(50, evalsTime, setEvalsTime, 'evals', () => evalsAM, v => setEvalsAM(v))
+                        }
+                    >
+                        <CiRedo />
+                    </button>
                 </div>
-                <button onClick={() => { setActiveTimer('evals'); setTime(evalsTime); setModalIsOpen(true); }}>
-                    <CiAlarmOn />
-                </button>
-                <button onClick={() => nextTest(50, evalsTime, setEvalsTime, 'evals')}>
 
-                    <CiRedo />
-                </button>
-            </div>
-
-            <div className="metalDetector">
-                <h2>Metal & Grind:</h2>
-                <div className="time-display">
-                    <MdKeyboardArrowRight
-                        style={{ visibility: nextDisplayTime?.label === "md" ? "visible" : "hidden" }}
-                    />
-                    {timeSplited(mdTime, dueTimers.includes('md'))}
-                    <MdKeyboardArrowLeft
-                        style={{ visibility: nextDisplayTime?.label === "md" ? "visible" : "hidden" }}
-                    />
+                {/* Metal & Grind */}
+                <div className="metalDetector">
+                    <h2>Metal &amp; Grind:</h2>
+                    <div className="time-display">
+                        <MdKeyboardArrowRight
+                            style={{ visibility: nextDisplayTime?.label === "md" ? "visible" : "hidden" }}
+                        />
+                        {timeSplited(mdTime, dueTimers.includes('md'), mdAM)}
+                        <MdKeyboardArrowLeft
+                            style={{ visibility: nextDisplayTime?.label === "md" ? "visible" : "hidden" }}
+                        />
+                    </div>
+                    <button onClick={() => { setActiveTimer('md'); setTime(mdTime); setModalIsOpen(true); }}>
+                        <CiAlarmOn />
+                    </button>
+                    <button
+                        onClick={() =>
+                            nextTest(110, mdTime, setMdTime, 'md', () => mdAM, v => setMdAM(v))
+                        }
+                    >
+                        <CiRedo />
+                    </button>
                 </div>
-                <button onClick={() => { setActiveTimer('md'); setTime(mdTime); setModalIsOpen(true); }}>
-                    <CiAlarmOn />
-                </button>
-                <button onClick={() => nextTest(110, mdTime, setMdTime, 'md')}>
 
-                    <CiRedo />
-                </button>
-            </div>
-
-            <div className="samples">
-                <h2>Samples:</h2>
-                <div className="time-display">
-                    <MdKeyboardArrowRight
-                        style={{ visibility: nextDisplayTime?.label === "samples" ? "visible" : "hidden" }}
-                    />
-                    {timeSplited(samplesTime, dueTimers.includes('samples'))}
-
-                    <MdKeyboardArrowLeft
-                        style={{ visibility: nextDisplayTime?.label === "samples" ? "visible" : "hidden" }}
-                    />
+                {/* Samples */}
+                <div className="samples">
+                    <h2>Samples:</h2>
+                    <div className="time-display">
+                        <MdKeyboardArrowRight
+                            style={{ visibility: nextDisplayTime?.label === "samples" ? "visible" : "hidden" }}
+                        />
+                        {timeSplited(samplesTime, dueTimers.includes('samples'), samplesAM)}
+                        <MdKeyboardArrowLeft
+                            style={{ visibility: nextDisplayTime?.label === "samples" ? "visible" : "hidden" }}
+                        />
+                    </div>
+                    <button onClick={() => { setActiveTimer('samples'); setTime(samplesTime); setModalIsOpen(true); }}>
+                        <CiAlarmOn />
+                    </button>
+                    <button
+                        onClick={() =>
+                            nextTest(120, samplesTime, setSamplesTime, 'samples', () => samplesAM, v => setSamplesAM(v))
+                        }
+                    >
+                        <CiRedo />
+                    </button>
                 </div>
-                <button onClick={() => { setActiveTimer('samples'); setTime(samplesTime); setModalIsOpen(true); }}>
-                    <CiAlarmOn />
-                </button>
-                <button onClick={() => nextTest(120, samplesTime, setSamplesTime, 'samples')}>
-                    <CiRedo />
-                </button>
             </div>
-
         </div>
-    </div>;
+    );
 };
 
 export default Timer;
