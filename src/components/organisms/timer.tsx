@@ -128,7 +128,6 @@ const Timer: React.FC = () => {
                     if (t === currentTime && phaseMatches && !next.includes(label)) next.push(label);
                 };
 
-
                 pushIfDue('kernel', kernelTime, kernelAM);
                 pushIfDue('evals', evalsTime, evalsAM);
                 pushIfDue('md', mdTime, mdAM);
@@ -151,7 +150,6 @@ const Timer: React.FC = () => {
                 { label: 'kernel' as const, time: kernelTime, phase: kernelAM },
                 { label: 'evals' as const, time: evalsTime, phase: evalsAM },
                 { label: 'md' as const, time: mdTime, phase: mdAM },
-                { label: 'samples' as const, time: samplesTime, phase: samplesAM },
             ];
 
             const candidates = items
@@ -177,7 +175,8 @@ const Timer: React.FC = () => {
         };
 
         getNextTimeWithPriority();
-    }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
+    }, [kernelTime, evalsTime, mdTime, kernelAM, evalsAM, mdAM]);
+
 
     return (
         <div>
