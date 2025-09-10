@@ -11,6 +11,8 @@ import {
     addMinutesWithPhase,
 } from '../../utils/timeUtils';
 
+import { useClock } from '../../hooks/useClock';
+
 const Timer: React.FC = () => {
     const [mdTime, setMdTime] = useState('00:00');
     const [evalsTime, setEvalsTime] = useState('00:00');
@@ -32,6 +34,7 @@ const Timer: React.FC = () => {
     } | null>(null);
 
     const [dueTimers, setDueTimers] = useState<string[]>([]);
+    const nowStr = useClock(false);
 
     const timeSplited = (t: string, highlight: boolean = false, ampm?: boolean | null) => {
         const [hours, minutes] = t.split(':');
@@ -114,10 +117,17 @@ const Timer: React.FC = () => {
             setDueTimers(prev => {
                 const next = [...prev];
 
-                const pushIfDue = (label: 'kernel' | 'evals' | 'md' | 'samples', t: string, phase: boolean | null) => {
-                    if (!t || phase == null) return;
-                    if (t === currentTime && phase === currentIsAM && !next.includes(label)) next.push(label);
+
+                const pushIfDue = (
+                    label: 'kernel' | 'evals' | 'md' | 'samples',
+                    t: string,
+                    phase: boolean | null
+                ) => {
+                    if (!t) return;
+                    const phaseMatches = (phase == null) ? true : (phase === currentIsAM);
+                    if (t === currentTime && phaseMatches && !next.includes(label)) next.push(label);
                 };
+
 
                 pushIfDue('kernel', kernelTime, kernelAM);
                 pushIfDue('evals', evalsTime, evalsAM);
@@ -181,6 +191,11 @@ const Timer: React.FC = () => {
                 />
 
                 {/* Kernel */}
+
+                <div className="page-clock" aria-live="polite" title="Hora local">
+                    {nowStr}
+                </div>
+
                 <div className="kernel">
                     <h2>Kernel:</h2>
                     <div className="time-display">
