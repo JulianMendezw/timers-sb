@@ -1,8 +1,7 @@
 .peanut-shift {
   display: grid;
   gap: .25rem;
-  margin-top: 100px;
-
+  margin-top: 4rem;
   &__title {
     margin: 0;
     font-size: 1.2rem;
@@ -31,7 +30,7 @@
 
     &--ok {
       color: #ffde00; // green-600
-      font-weight: 700;
+      font-weight: 500;
     }
     &--none {
       color: #334155; // slate-700
