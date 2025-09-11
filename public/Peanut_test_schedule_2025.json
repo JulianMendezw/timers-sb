@@ -1,0 +1,417 @@
+{
+    "version": 1,
+    "year": 2025,
+    "generatedAt": "2025-09-10T07:46:25.000Z",
+    "entries": [
+        {
+            "date": "2025-01-06",
+            "month": "January",
+            "monthNum": 1,
+            "day": 6,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-01-13",
+            "month": "January",
+            "monthNum": 1,
+            "day": 13,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-01-20",
+            "month": "January",
+            "monthNum": 1,
+            "day": 20,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-01-27",
+            "month": "January",
+            "monthNum": 1,
+            "day": 27,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-02-03",
+            "month": "February",
+            "monthNum": 2,
+            "day": 3,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-02-10",
+            "month": "February",
+            "monthNum": 2,
+            "day": 10,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-02-17",
+            "month": "February",
+            "monthNum": 2,
+            "day": 17,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-02-24",
+            "month": "February",
+            "monthNum": 2,
+            "day": 24,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-03-03",
+            "month": "March",
+            "monthNum": 3,
+            "day": 3,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-03-10",
+            "month": "March",
+            "monthNum": 3,
+            "day": 10,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-03-17",
+            "month": "March",
+            "monthNum": 3,
+            "day": 17,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-03-24",
+            "month": "March",
+            "monthNum": 3,
+            "day": 24,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-03-31",
+            "month": "March",
+            "monthNum": 3,
+            "day": 31,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-04-07",
+            "month": "April",
+            "monthNum": 4,
+            "day": 7,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-04-14",
+            "month": "April",
+            "monthNum": 4,
+            "day": 14,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-04-21",
+            "month": "April",
+            "monthNum": 4,
+            "day": 21,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-04-28",
+            "month": "April",
+            "monthNum": 4,
+            "day": 28,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-05-05",
+            "month": "May",
+            "monthNum": 5,
+            "day": 5,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-05-12",
+            "month": "May",
+            "monthNum": 5,
+            "day": 12,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-05-19",
+            "month": "May",
+            "monthNum": 5,
+            "day": 19,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-05-26",
+            "month": "May",
+            "monthNum": 5,
+            "day": 26,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-06-02",
+            "month": "June",
+            "monthNum": 6,
+            "day": 2,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-06-09",
+            "month": "June",
+            "monthNum": 6,
+            "day": 9,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-06-16",
+            "month": "June",
+            "monthNum": 6,
+            "day": 16,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-06-23",
+            "month": "June",
+            "monthNum": 6,
+            "day": 23,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-07-07",
+            "month": "July",
+            "monthNum": 7,
+            "day": 7,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-07-14",
+            "month": "July",
+            "monthNum": 7,
+            "day": 14,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-07-21",
+            "month": "July",
+            "monthNum": 7,
+            "day": 21,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-07-28",
+            "month": "July",
+            "monthNum": 7,
+            "day": 28,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-08-04",
+            "month": "August",
+            "monthNum": 8,
+            "day": 4,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-08-11",
+            "month": "August",
+            "monthNum": 8,
+            "day": 11,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-08-18",
+            "month": "August",
+            "monthNum": 8,
+            "day": 18,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-08-25",
+            "month": "August",
+            "monthNum": 8,
+            "day": 25,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-09-01",
+            "month": "September",
+            "monthNum": 9,
+            "day": 1,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-09-08",
+            "month": "September",
+            "monthNum": 9,
+            "day": 8,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-09-15",
+            "month": "September",
+            "monthNum": 9,
+            "day": 15,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-09-22",
+            "month": "September",
+            "monthNum": 9,
+            "day": 22,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-09-29",
+            "month": "September",
+            "monthNum": 9,
+            "day": 29,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-10-06",
+            "month": "October",
+            "monthNum": 10,
+            "day": 6,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-10-13",
+            "month": "October",
+            "monthNum": 10,
+            "day": 13,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-10-20",
+            "month": "October",
+            "monthNum": 10,
+            "day": 20,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-10-27",
+            "month": "October",
+            "monthNum": 10,
+            "day": 27,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-11-03",
+            "month": "November",
+            "monthNum": 11,
+            "day": 3,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-11-10",
+            "month": "November",
+            "monthNum": 11,
+            "day": 10,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-11-17",
+            "month": "November",
+            "monthNum": 11,
+            "day": 17,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-11-24",
+            "month": "November",
+            "monthNum": 11,
+            "day": 24,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-12-01",
+            "month": "December",
+            "monthNum": 12,
+            "day": 1,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-12-08",
+            "month": "December",
+            "monthNum": 12,
+            "day": 8,
+            "shift": "1st & 2nd"
+        },
+        {
+            "date": "2025-12-15",
+            "month": "December",
+            "monthNum": 12,
+            "day": 15,
+            "shift": "2nd & 3rd"
+        },
+        {
+            "date": "2025-12-22",
+            "month": "December",
+            "monthNum": 12,
+            "day": 22,
+            "shift": "1st & 3rd"
+        },
+        {
+            "date": "2025-12-29",
+            "month": "December",
+            "monthNum": 12,
+            "day": 29,
+            "shift": "1st & 2nd"
+        }
+    ],
+    "byDate": {
+        "2025-01-06": "2nd & 3rd",
+        "2025-01-13": "1st & 3rd",
+        "2025-01-20": "1st & 2nd",
+        "2025-01-27": "2nd & 3rd",
+        "2025-02-03": "1st & 3rd",
+        "2025-02-10": "1st & 2nd",
+        "2025-02-17": "2nd & 3rd",
+        "2025-02-24": "1st & 3rd",
+        "2025-03-03": "1st & 2nd",
+        "2025-03-10": "2nd & 3rd",
+        "2025-03-17": "1st & 3rd",
+        "2025-03-24": "1st & 2nd",
+        "2025-03-31": "2nd & 3rd",
+        "2025-04-07": "1st & 3rd",
+        "2025-04-14": "1st & 2nd",
+        "2025-04-21": "2nd & 3rd",
+        "2025-04-28": "1st & 3rd",
+        "2025-05-05": "1st & 2nd",
+        "2025-05-12": "2nd & 3rd",
+        "2025-05-19": "1st & 3rd",
+        "2025-05-26": "1st & 2nd",
+        "2025-06-02": "2nd & 3rd",
+        "2025-06-09": "1st & 3rd",
+        "2025-06-16": "1st & 2nd",
+        "2025-06-23": "2nd & 3rd",
+        "2025-07-07": "1st & 3rd",
+        "2025-07-14": "1st & 2nd",
+        "2025-07-21": "2nd & 3rd",
+        "2025-07-28": "1st & 3rd",
+        "2025-08-04": "1st & 2nd",
+        "2025-08-11": "2nd & 3rd",
+        "2025-08-18": "1st & 3rd",
+        "2025-08-25": "1st & 2nd",
+        "2025-09-01": "2nd & 3rd",
+        "2025-09-08": "1st & 3rd",
+        "2025-09-15": "1st & 2nd",
+        "2025-09-22": "2nd & 3rd",
+        "2025-09-29": "1st & 3rd",
+        "2025-10-06": "1st & 2nd",
+        "2025-10-13": "2nd & 3rd",
+        "2025-10-20": "1st & 3rd",
+        "2025-10-27": "1st & 2nd",
+        "2025-11-03": "2nd & 3rd",
+        "2025-11-10": "1st & 3rd",
+        "2025-11-17": "1st & 2nd",
+        "2025-11-24": "2nd & 3rd",
+        "2025-12-01": "1st & 3rd",
+        "2025-12-08": "1st & 2nd",
+        "2025-12-15": "2nd & 3rd",
+        "2025-12-22": "1st & 3rd",
+        "2025-12-29": "1st & 2nd"
+    }
+}

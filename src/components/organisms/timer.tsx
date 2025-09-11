@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { CiAlarmOn, CiRedo } from "react-icons/ci";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
-import TimeModal from '../atoms/modalSetTime/setTimeModal';
+
+// Syles
 import './timer.scss';
 
+// Components
+import TimeModal from '../atoms/modalSetTime/setTimeModal';
+import PeanutTestShift from '../atoms/PeanutTestShift/PeanutTestShift';
+
+
+// Utils
 import {
     normalizeHHMM12,
     inferNextPhase,
@@ -11,6 +18,7 @@ import {
     addMinutesWithPhase,
 } from '../../utils/timeUtils';
 
+// Hooks
 import { useClock } from '../../hooks/useClock';
 
 const Timer: React.FC = () => {
@@ -177,7 +185,6 @@ const Timer: React.FC = () => {
         getNextTimeWithPriority();
     }, [kernelTime, evalsTime, mdTime, kernelAM, evalsAM, mdAM]);
 
-
     return (
         <div>
             <div className="timer-controls">
@@ -290,6 +297,7 @@ const Timer: React.FC = () => {
                     </button>
                 </div>
             </div>
+            <PeanutTestShift />
         </div>
     );
 };
