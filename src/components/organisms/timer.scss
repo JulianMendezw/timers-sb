@@ -1,75 +1,77 @@
+/* ===== Page Header / Clock / Sound toggle ===== */
+.timer-page {
+    display: block;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 20px;
+
+    &__left {
+        display: flex;
+        flex-direction: column;
+        gap: .25rem;
+
+        .page-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+    }
+
+    &__right {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+}
+
 .page-clock {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     margin-bottom: 20px;
 }
 
-.kernel,
-.evals,
-.metalDetector,
-.samples {
+.sound-toggle {
+    border: 1px #cbd5e1;
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    font-weight: 100;
+    cursor: pointer;
+
+    &.on {
+        border-color: #008cc6;
+    }
+}
+
+/* ===== Timer rows ===== */
+.timer-block {
     display: flex;
     width: 100%;
-
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     gap: 5px;
+    padding: 0rem 0;
 
     h2 {
-        width: 80%;
         margin: 0;
-        margin-right: 20px;
         font-size: 1.2rem;
         font-weight: 200;
         text-align: left;
-    }
-
-    p {
-        font-size: 2rem;
-        font-weight: 400;
-        letter-spacing: 2px;
-        margin: 0;
-    }
-
-    button {
-        width: 60px; 
-        height: 30px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #1e1e1e; 
-        border: none;
-        border-radius: 12px; 
-        cursor: pointer;
-    }
-
-
-    .highlight-red {
-        color: rgb(0, 255, 187);
-        font-weight: bold;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.5;
-        }
-
-        100% {
-            opacity: 1;
-        }
+        flex: 0 0 37%;
     }
 
     .time-display {
+        flex: 1 1 auto;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
 
         svg {
             width: 20px;
@@ -77,31 +79,97 @@
             opacity: 0.8;
         }
 
+        /* Default time style */
         .animated-time {
             font-size: 1.5rem;
             display: flex;
             align-items: center;
+            font-weight: 400;
+            color: #fff;
+            margin: 0.2rem;
+
+            .blinking-colon {
+                animation: blink 2.5s infinite;
+            }
+
+            .ampm-badge {
+                margin-left: .35rem;
+                font-size: .7rem;
+                font-weight: 700;
+                letter-spacing: .5px;
+                color: #94a3b8;
+                /* slate-400 */
+            }
+        }
+
+        .animated-time.highlight-red {
+            color: #008cc6;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+    }
+
+    .timer-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+
+        button {
+            width: 35px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1e1e1e;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #fff;
+
+            &:hover {
+                background-color: #222;
+            }
         }
     }
 }
 
+/* Keep row classes for future overrides if needed */
+.kernel,
+.evals,
+.metalDetector,
+.samples {}
+
+/* Global animated time (fallbacks) */
 .animated-time {
     font-size: 2rem;
     color: white;
+}
 
-    .blinking-colon {
-        animation: blink 2.5s infinite;
+/* Animations */
+@keyframes pulse {
+    0% {
+        opacity: 1;
     }
 
-    @keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
 
-        0%,
-        100% {
-            opacity: 1;
-        }
+    100% {
+        opacity: 1;
+    }
+}
 
-        50% {
-            opacity: 0.2;
-        }
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.2;
     }
 }
