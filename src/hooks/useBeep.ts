@@ -32,7 +32,7 @@ export function useBeep() {
     /** Short beep (customizable) */
     const beep = useCallback(
         async (opts?: { freq?: number; duration?: number; volume?: number }) => {
-            const { freq = 880, duration = 0.18, volume = 0.22 } = opts ?? {};
+            const { freq = 880, duration = 0.18, volume = 1 } = opts ?? {};
             const ctx = await ensureContext();
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();

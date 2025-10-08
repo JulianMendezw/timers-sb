@@ -1,0 +1,28 @@
+.footer-minimal {
+    /* Sits in the last grid row, so it “sticks” to the bottom on short pages */
+    text-align: center;
+    padding: 0.4rem 0.6rem;
+    /* tiny footprint */
+    font-size: 0.75rem;
+    font-weight: 300;
+    /* small text */
+    line-height: 1;
+    color: #9aa0a6;
+    /* subtle gray */
+    background: transparent;
+
+    /* Optional: slightly softer on light backgrounds */
+    @media (prefers-color-scheme: light) {
+        color: #8a8f97;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        color: #b6bcc3;
+    }
+}
+
+/* If you ever need a gently separated footer line, uncomment:
+.footer-minimal {
+  border-top: 1px solid color-mix(in oklab, currentColor 20%, transparent);
+}
+*/

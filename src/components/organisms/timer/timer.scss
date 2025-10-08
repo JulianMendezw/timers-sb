@@ -1,6 +1,18 @@
 /* ===== Page Header / Clock / Sound toggle ===== */
 .timer-page {
-    display: block;
+
+    display: flex;
+    flex-direction: column;
+
+    /* fill the available height inside .app-main */
+    min-height: 100%;
+
+    /* 🎯 vertical centering */
+    justify-content: center;
+
+    /* keep normal horizontal layout */
+    align-items: stretch;
+
 }
 
 .page-header {

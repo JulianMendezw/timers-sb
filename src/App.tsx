@@ -1,23 +1,18 @@
 // import { useState } from 'react'
 // import viteLogo from '/sb-logo.png'
 import './App.css'
-import Timer from './components/organisms/timer'
+import Timer from './components/organisms/timer/timer'
+import Footer from './components/atoms/footer/Footer';
 
 function App() {
-
   return (
-    <>
-      {/* <div>
-        <a href="" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-      </div> */}
-      <div className="card">
+    <div className="app-container">
+      <main className="app-main">
         <Timer />
-      </div>
-
-    </>
-  )
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export default App

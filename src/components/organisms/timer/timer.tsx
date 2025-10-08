@@ -6,8 +6,8 @@ import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 import './timer.scss';
 
 // Components
-import TimeModal from '../atoms/modalSetTime/setTimeModal';
-import PeanutTestShift from '../atoms/PeanutTestShift/PeanutTestShift';
+import TimeModal from '../../atoms/modalSetTime/setTimeModal';
+import PeanutTestShift from '../../atoms/PeanutTestShift/PeanutTestShift';
 
 // Utils
 import {
@@ -15,11 +15,11 @@ import {
     inferNextPhase,
     minutesUntilNextWithPhase,
     addMinutesWithPhase,
-} from '../../utils/timeUtils';
+} from '../../../utils/timeUtils';
 
 // Hooks
-import { useClock } from '../../hooks/useClock';
-import { useBeep } from '../../hooks/useBeep';
+import { useClock } from '../../../hooks/useClock';
+import { useBeep } from '../../../hooks/useBeep';
 
 type Label = 'kernel' | 'evals' | 'md' | 'samples';
 
@@ -63,6 +63,21 @@ const Timer: React.FC = () => {
         md: 660,
         samples: 520,
     };
+
+    // inside Timer component, above the effect that handles newlyDue
+    const playTripleBeep = (frequency: number, startOffsetMs = 0) => {
+        // Tweak these to taste
+        const pipMs = 120; // each beep duration (ms)
+        const gapMs = 250; // silence between beeps (ms)
+        const volume = 100;
+
+        [0, 1, 2, 3].forEach((i) => {
+            setTimeout(() => {
+                beep({ freq: frequency, duration: pipMs / 1000, volume });
+            }, startOffsetMs + i * (pipMs + gapMs));
+        });
+    };
+
 
     // Render HH:MM with optional highlight and AM/PM badge
     const timeSplited = (t: string, highlight = false, ampm?: boolean | null) => {
@@ -210,7 +225,7 @@ const Timer: React.FC = () => {
     // 🔔 Beep on every newly-due timer
     useEffect(() => {
         if (!soundOn) {
-            prevDueRef.current = dueTimers; // keep in sync even when muted
+            prevDueRef.current = dueTimers;
             return;
         }
 
@@ -218,16 +233,17 @@ const Timer: React.FC = () => {
         const newlyDue = dueTimers.filter((label) => !prev.includes(label));
 
         if (newlyDue.length > 0) {
-            // Play a quick sequence: one beep per newly-due label (capped for safety)
+            // Stagger different labels slightly so triples don’t overlap
+            const labelStaggerMs = 240;
             newlyDue.slice(0, 4).forEach((label, idx) => {
-                setTimeout(() => {
-                    beep({ freq: tones[label] ?? 880, duration: 0.16, volume: 0.22 });
-                }, idx * 180);
+                const freq = tones[label] ?? 880;
+                playTripleBeep(freq, idx * labelStaggerMs);
             });
         }
 
         prevDueRef.current = dueTimers;
     }, [dueTimers, soundOn, beep]);
+
 
     return (
         <div className="timer-page">
@@ -323,7 +339,7 @@ const Timer: React.FC = () => {
                     <MdKeyboardArrowRight
                         style={{ visibility: nextDisplayTime?.label === 'md' ? 'visible' : 'hidden' }}
                     />
-                    {timeSplited(mdTime, dueTimers.includes('md'), mdAM)}
+                    {timeSplited(mdTime, dueTimers.includes('md'))}
                     <MdKeyboardArrowLeft
                         style={{ visibility: nextDisplayTime?.label === 'md' ? 'visible' : 'hidden' }}
                     />
