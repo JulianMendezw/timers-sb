@@ -203,7 +203,7 @@ export function useTimers(): UseTimersReturn {
         setNextTime: (v: string) => void,
         label: Label,
         phaseGetter: () => boolean | null,
-        phaseSetter: (v: boolean) => void
+        // phaseSetter: (v: boolean) => void
     ) => {
         const baseHHMM = normalizeHHMM12(currentHHMM);
         const existingPhase = phaseGetter();
