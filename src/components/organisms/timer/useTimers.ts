@@ -211,8 +211,33 @@ export function useTimers(): UseTimersReturn {
 
         const { newHHMM, newIsAM } = addMinutesWithPhase(baseHHMM, effectivePhase, minutesToAdd);
 
-        setNextTime(newHHMM);
-        phaseSetter(newIsAM);
+        // Try to update the view-provided setter (may be a no-op)
+        try {
+            setNextTime(newHHMM);
+        } catch {
+            /* ignore */
+        }
+
+        // Also update the hook's internal state so the UI reflects the change
+        switch (label) {
+            case 'kernel':
+                setKernelTime(newHHMM);
+                setKernelAM(newIsAM);
+                break;
+            case 'evals':
+                setEvalsTime(newHHMM);
+                setEvalsAM(newIsAM);
+                break;
+            case 'md':
+                setMdTime(newHHMM);
+                setMdAM(newIsAM);
+                break;
+            case 'samples':
+                setSamplesTime(newHHMM);
+                setSamplesAM(newIsAM);
+                break;
+        }
+
         setDueTimers((prev) => prev.filter((item) => item !== label));
 
         await persistTimer(label, newHHMM, newIsAM);
