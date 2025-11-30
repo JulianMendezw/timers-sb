@@ -1,0 +1,157 @@
+.files-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 18px;
+    gap: 16px;
+}
+
+.files-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h1 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #f4f7fb;
+    }
+}
+
+.upload-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(180deg, #151617, #17181a);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    color: #eaf3fb;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 200ms ease;
+
+    &:hover {
+        background: linear-gradient(180deg, #1b1c1d, #202122);
+        box-shadow: 0 6px 14px rgba(2, 6, 23, 0.5);
+        transform: translateY(-2px);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    svg {
+        font-size: 1.2rem;
+    }
+}
+
+.feedback-message {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(0, 163, 214, 0.1);
+    border: 1px solid rgba(0, 163, 214, 0.2);
+    color: #00a3d6;
+    font-size: 0.95rem;
+}
+
+.files-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.empty-state {
+    text-align: center;
+    color: #9aa4b2;
+    padding: 2rem;
+    font-size: 1rem;
+}
+
+.files-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+
+    thead {
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    th {
+        padding: 12px;
+        text-align: left;
+        color: #dfeaf7;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.01);
+        color: #c9d3e0;
+    }
+
+    tr:hover {
+        background: rgba(255, 255, 255, 0.015);
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.action-btn {
+    padding: 6px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    color: #9aa4b2;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.05);
+        color: #dfeaf7;
+    }
+
+    &.delete:hover {
+        color: #ff7b7b;
+        border-color: rgba(255, 123, 123, 0.2);
+    }
+
+    svg {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .files-page {
+        padding: 12px;
+    }
+
+    .files-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .upload-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .files-table {
+        font-size: 0.85rem;
+    }
+
+    th,
+    td {
+        padding: 8px;
+    }
+}
