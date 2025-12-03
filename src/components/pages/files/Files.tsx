@@ -15,6 +15,9 @@ const Files: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState('');
 
+    const bucketName = import.meta.env.VITE_SUPABASE_BUCKET as string;
+    const userId = '54c89074-f0e7-48fc-a158-da7d75e47a9d';
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -23,21 +26,26 @@ const Files: React.FC = () => {
         setFeedback('Uploading...');
 
         try {
-            const fileName = `${Date.now()}-${file.name}`;
-            const { error } = await supabase.storage.from('documents').upload(fileName, file);
+            const filePath = `${userId}/${Date.now()}-${file.name}`;
+            console.log(file)
+            const { error } = await supabase.storage
+                .from(bucketName)
+                .upload(filePath, file);
 
             if (error) {
                 setFeedback(`Upload failed: ${error.message}`);
+                console.error('Upload error:', error);
             } else {
-                setFeedback('File uploaded successfully!');
-                // Reset input
+                setFeedback('File uploaded successfully! Loading files...');
                 event.target.value = '';
-                // Reload files list
+
+                // Wait 1 second for metadata to sync, then reload
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 await loadFiles();
             }
         } catch (err) {
             setFeedback('Error uploading file.');
-            console.error(err);
+            console.error('Upload exception:', err);
         } finally {
             setLoading(false);
         }
@@ -45,23 +53,38 @@ const Files: React.FC = () => {
 
     const loadFiles = async () => {
         try {
-            const { data, error } = await supabase.storage.from('documents').list();
+            const { data, error } = await supabase.storage
+                .from(bucketName)
+                .list(userId, {
+                    limit: 100,
+                    offset: 0,
+                    sortBy: { column: 'created_at', order: 'desc' },
+                });
+
             if (error) {
                 setFeedback(`Error loading files: ${error.message}`);
+                console.error('List error:', error);
                 return;
             }
 
-            const fileList: FileItem[] = data.map((file) => ({
-                name: file.name,
-                size: file.metadata?.size || 0,
-                created: new Date(file.created_at).toLocaleDateString(),
-                url: '',
-            }));
+            // Filter out directories, keep only files
+            const fileList: FileItem[] = data
+                .filter((item) => item.id) // Only items with id are files
+                .map((file) => ({
+                    name: file.name,
+                    size: file.metadata?.size || 0,
+                    created: new Date(file.created_at).toLocaleDateString(),
+                    url: '',
+                }));
 
             setFiles(fileList);
+
+            if (fileList.length === 0) {
+                setFeedback('No files found in your directory.');
+            }
         } catch (err) {
             setFeedback('Error loading files.');
-            console.error(err);
+            console.error('Load exception:', err);
         }
     };
 
@@ -70,7 +93,11 @@ const Files: React.FC = () => {
 
         setLoading(true);
         try {
-            const { error } = await supabase.storage.from('documents').remove([fileName]);
+            const filePath = `${userId}/${fileName}`;
+            const { error } = await supabase.storage
+                .from(bucketName)
+                .remove([filePath]);
+
             if (error) {
                 setFeedback(`Delete failed: ${error.message}`);
             } else {
@@ -87,9 +114,10 @@ const Files: React.FC = () => {
 
     const handleDownload = async (fileName: string) => {
         try {
+            const filePath = `${userId}/${fileName}`;
             const { data, error } = await supabase.storage
-                .from('documents')
-                .download(fileName);
+                .from(bucketName)
+                .download(filePath);
 
             if (error) {
                 setFeedback(`Download failed: ${error.message}`);
@@ -145,8 +173,8 @@ const Files: React.FC = () => {
                         </thead>
                         <tbody>
                             {files.map((file) => (
-                                <tr key={file.name}>
-                                    <td>{file.name}</td>
+                                <tr key={file.name.split('-')[1]}>
+                                    <td>{file.name.split('-')[1]}</td>
                                     <td>{(file.size / 1024).toFixed(2)} KB</td>
                                     <td>{file.created}</td>
                                     <td className="actions">
