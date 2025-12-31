@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MdUploadFile, MdDelete, MdDownload } from 'react-icons/md';
+import { MdUploadFile, MdDelete, MdDownload, MdPrint } from 'react-icons/md';
+import FilePrintModal from '../../atoms/FilePrintModal/FilePrintModal';
 import './Files.scss';
 import { supabase } from '../../../lib/supabaseClient';
 
@@ -136,9 +137,14 @@ const Files: React.FC = () => {
         }
     };
 
+    
+
     React.useEffect(() => {
         loadFiles();
     }, []);
+
+    // modal state for PDF preview/edit/print
+    const [modalFile, setModalFile] = useState<string | null>(null);
 
     return (
         <div className="files-page">
@@ -186,6 +192,13 @@ const Files: React.FC = () => {
                                             <MdDownload />
                                         </button>
                                         <button
+                                            className="action-btn print"
+                                            onClick={() => setModalFile(file.name)}
+                                            title="Preview"
+                                        >
+                                            <MdPrint />
+                                        </button>
+                                        <button
                                             className="action-btn delete"
                                             onClick={() => handleDelete(file.name)}
                                             title="Delete"
@@ -199,6 +212,14 @@ const Files: React.FC = () => {
                     </table>
                 )}
             </div>
+            {modalFile && (
+                <FilePrintModal
+                    bucket={bucketName}
+                    userId={userId}
+                    fileName={modalFile}
+                    onClose={() => setModalFile(null)}
+                />
+            )}
         </div>
     );
 };
