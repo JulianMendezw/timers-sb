@@ -21,7 +21,7 @@ export function usePeanutWeekShift(now: Date = new Date()): UsePeanutWeekShift {
     (async () => {
       try {
         setLoading(true);
-        const json = await loadPeanutSchedule('/Peanut_test_schedule_2025.json');
+        const json = await loadPeanutSchedule('/Peanut_test_schedule_2026.json');
         if (!alive) return;
         setData(json);
         setError(null);
