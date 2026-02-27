@@ -4,6 +4,7 @@ import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 import './timer.scss';
 import TimeModal from '../../atoms/modalSetTime/setTimeModal';
 import PeanutTestShift from '../../atoms/PeanutTestShift/PeanutTestShift';
+import ExtraSample from '../samples/ExtraSample';
 import type { UseTimersReturn } from './useTimers';
 
 type Props = UseTimersReturn & {
@@ -187,6 +188,10 @@ const TimerView: React.FC<Props> = ({
                     </button>
                 </div>
             </section>
+
+            <div className="samples-extra-row">
+                <ExtraSample />
+            </div>
 
             <PeanutTestShift />
         </div>
