@@ -72,7 +72,6 @@ const renderCountryFlag = (code?: string) => {
 const ExtraSample: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
   const [fetchInfo, setFetchInfo] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -92,7 +91,6 @@ const ExtraSample: React.FC = () => {
     const STORAGE_KEY = 'finished_products_cache_v1';
 
     const load = async () => {
-      setLoading(true);
 
       // Try cache first (valid 24h)
       try {
@@ -114,7 +112,6 @@ const ExtraSample: React.FC = () => {
             }));
             if (mounted) {
               setProducts(mappedCached);
-              setLoading(false);
               return;
             }
           }
@@ -163,7 +160,6 @@ const ExtraSample: React.FC = () => {
           country_code: r.country_code ?? r.country ?? null,
         }));
         setProducts(mapped);
-        setLoading(false);
 
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ ts: Date.now(), rows: rows ?? [] }));
@@ -354,7 +350,6 @@ const ExtraSample: React.FC = () => {
       // Always let the rotation algorithm pick the extra when taking a sample now
       const pick = pickNextExtra(activeIds, availability);
       let selectedExtraKey: string | null = pick.next ?? null;
-      const usedPicker = true;
 
       if (!selectedExtraKey) {
         // fallback: pick the first active product that is available (defensive)
@@ -399,7 +394,7 @@ const ExtraSample: React.FC = () => {
         notes: null,
       } as any;
 
-      const { data, error } = await supabase.from('sample_records').insert([payload]).select();
+      const { error } = await supabase.from('sample_records').insert([payload]).select();
       if (error) {
         console.error('Failed saving sample_records', error);
         setSaveInfo(`Save failed: ${error.message ?? String(error)}`);

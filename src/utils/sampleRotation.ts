@@ -31,12 +31,6 @@ export function saveRotationState(s: RotationState) {
   }
 }
 
-function arraysEqual(a: string[], b: string[]) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-
 /**
  * Decide the next extra product according to rules:
  * 1) If a new product appears in activeIds (not in lastActiveSnapshot) -> pick it immediately.
