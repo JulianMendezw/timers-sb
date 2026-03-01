@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { insertSampleRecord } from '../../../lib/sampleRecordsClient';
+import { resolveProductionDayId } from '../../../lib/productionDaysClient';
 import { fetchActiveProductIds, setActiveProduct, subscribeActiveProducts, setAvailability as setAvailabilityServer, fetchAvailabilityMap, subscribeAvailability, setProductOrder } from '../../../lib/activeProducts';
 import { pickNextExtra, previewNextExtra, loadRotationState, saveRotationState, syncRotationToActiveOrder } from '../../../utils/sampleRotation';
 import { stripItemNumberPrefix } from '../../../utils/itemNumber';
@@ -438,21 +439,26 @@ const ExtraSample: React.FC = () => {
       const extra = products.find((p) => p.id === selectedExtraKey || p.item_number === selectedExtraKey);
 
       const sampledAt = getSampledAt(selectedHour);
+      const productionDayResolution = await resolveProductionDayId(sampledAt);
+      if (!productionDayResolution.ok) {
+        toast.error(`Production day resolve failed: ${productionDayResolution.error}`);
+        return;
+      }
 
       const payload = {
-        production_day_id: null,  // Database expects UUID, not date string
+        production_day_id: productionDayResolution.id,
         hour_code: selectedHour,
         sampled_at: sampledAt,
         active_products: activeProductsList,
         extra_product: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
         cycle_number: 0,
-        notes: {
+        notes: JSON.stringify({
           debug_mode: 'rotation-test',
           predicted_extra: selectedExtraKey ? stripItemNumberPrefix(selectedExtraKey) : null,
           selected_extra: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
           drag_reorder_since_last_sample: debugActionFlags.dragReorder,
           manual_set_extra_since_last_sample: debugActionFlags.manualExtraSet,
-        },
+        }),
       } as any;
 
       const result = await insertSampleRecord(payload);

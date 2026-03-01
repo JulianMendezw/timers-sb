@@ -7,6 +7,7 @@ import TimeModal from '../../atoms/modalSetTime/setTimeModal';
 import PeanutTestShift from '../../atoms/PeanutTestShift/PeanutTestShift';
 import ExtraSample from '../samples/ExtraSample';
 import type { UseTimersReturn } from './useTimers';
+import { getShiftLabel } from '../../../utils/productionDay';
 
 type Props = UseTimersReturn & {
     setKernelTime: (v: string) => void;
@@ -56,6 +57,7 @@ const TimerView: React.FC<Props> = ({
         minute: '2-digit',
         hour12: false,
     });
+    const currentShiftLabel = getShiftLabel(new Date());
 
     const timeSplited = (t: string, highlight = false, ampm?: boolean | null) => {
         const [hours, minutes] = t.split(':');
@@ -77,6 +79,8 @@ const TimerView: React.FC<Props> = ({
                         {nowStr}
                         <span className="page-clock__divider"> | </span>
                         <span className="page-clock__24">{now24}</span>
+                        <span className="page-clock__divider"> | </span>
+                        <span className="page-clock__shift">{currentShiftLabel}</span>
                     </div>
                 </div>
 

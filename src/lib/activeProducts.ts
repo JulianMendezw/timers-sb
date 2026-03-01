@@ -1,25 +1,88 @@
 import { supabase } from './supabaseClient';
 
+type ActiveProductRow = {
+  item_id: string;
+  is_active?: boolean | null;
+  is_available?: boolean | null;
+  sort_order?: number | null;
+  updated_by?: string | null;
+  updated_at?: string | null;
+};
+
+function getSupabaseRestConfig() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY as string | undefined;
+  if (!supabaseUrl || !supabaseApiKey) {
+    throw new Error('Missing Supabase configuration');
+  }
+  return { supabaseUrl, supabaseApiKey };
+}
+
+function isProFeatureOnlyResponse(text: string): boolean {
+  return text.toUpperCase().includes('PRO FEATURE ONLY');
+}
+
+async function readActiveProductsRows(): Promise<ActiveProductRow[]> {
+  const { supabaseUrl, supabaseApiKey } = getSupabaseRestConfig();
+  const response = await fetch(`${supabaseUrl}/rest/v1/active_products`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseApiKey,
+      Authorization: `Bearer ${supabaseApiKey}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || response.statusText || `HTTP ${response.status}`);
+  }
+  if (isProFeatureOnlyResponse(text)) {
+    throw new Error('PRO FEATURE ONLY');
+  }
+
+  if (!text.trim()) return [];
+  const parsed = JSON.parse(text);
+  return Array.isArray(parsed) ? (parsed as ActiveProductRow[]) : [];
+}
+
+async function upsertActiveProductsRows(rows: ActiveProductRow[]): Promise<void> {
+  if (!rows.length) return;
+  const { supabaseUrl, supabaseApiKey } = getSupabaseRestConfig();
+  const response = await fetch(`${supabaseUrl}/rest/v1/active_products`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: supabaseApiKey,
+      Authorization: `Bearer ${supabaseApiKey}`,
+      Prefer: 'resolution=merge-duplicates,return=minimal',
+    },
+    body: JSON.stringify(rows),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || response.statusText || `HTTP ${response.status}`);
+  }
+  if (isProFeatureOnlyResponse(text)) {
+    throw new Error('PRO FEATURE ONLY');
+  }
+}
+
 /**
  * Fetch active product item_ids from `active_products` table, ordered by sort_order.
  */
 export async function fetchActiveProductIds(): Promise<string[]> {
   try {
-    const { data, error } = await supabase.from('active_products').select('item_id,sort_order').eq('is_active', true).order('sort_order', { ascending: true, nullsFirst: false });
-    if (error) {
-      console.warn('fetchActiveProductIds error', error);
-      // Log full error details for debugging
-      if (error.code) console.error('Supabase error code:', error.code);
-      if (error.message) console.error('Supabase error message:', error.message);
-      if (error.details) console.error('Supabase error details:', error.details);
-      if (error.hint) console.error('Supabase error hint:', error.hint);
-      return [];
-    }
-    if (!data) {
-      console.warn('fetchActiveProductIds: No data returned');
-      return [];
-    }
-    return (data as any[]).map((r) => r.item_id as string).filter(Boolean);
+    const rows = await readActiveProductsRows();
+    return rows
+      .filter((r) => r.item_id && r.is_active === true)
+      .sort((a, b) => {
+        const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+        const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+        return aSort - bSort;
+      })
+      .map((r) => r.item_id);
   } catch (err) {
     console.error('fetchActiveProductIds exception', err);
     return [];
@@ -31,32 +94,14 @@ export async function fetchActiveProductIds(): Promise<string[]> {
  */
 export async function setActiveProduct(item_id: string, is_active: boolean, updated_by?: string | null) {
   try {
-    const payload = {
+    const payload: ActiveProductRow = {
       item_id,
       is_active,
       updated_by: updated_by ?? null,
       updated_at: new Date().toISOString(),
-    } as any;
+    };
 
-    const { data, error } = await supabase.from('active_products').select('item_id').eq('item_id', item_id).limit(1);
-    if (error) {
-      console.error('setActiveProduct lookup error', error);
-      throw error;
-    }
-
-    if (data && data.length > 0) {
-      const { error: updateError } = await supabase.from('active_products').update(payload).eq('item_id', item_id);
-      if (updateError) {
-        console.error('setActiveProduct update error', updateError);
-        throw updateError;
-      }
-    } else {
-      const { error: insertError } = await supabase.from('active_products').insert(payload);
-      if (insertError) {
-        console.error('setActiveProduct insert error', insertError);
-        throw insertError;
-      }
-    }
+    await upsertActiveProductsRows([payload]);
   } catch (err) {
     console.error('setActiveProduct exception', err);
     throw err;
@@ -79,7 +124,7 @@ export async function upsertActiveProducts(item_ids: string[], updated_by?: stri
  */
 export async function setAvailability(item_id: string, is_available: boolean, updated_by?: string | null) {
   try {
-    const payload: any = {
+    const payload: ActiveProductRow = {
       item_id,
       is_active: true,
       is_available: is_available,
@@ -87,25 +132,7 @@ export async function setAvailability(item_id: string, is_available: boolean, up
       updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase.from('active_products').select('item_id').eq('item_id', item_id).limit(1);
-    if (error) {
-      console.error('setAvailability lookup error', error);
-      throw error;
-    }
-
-    if (data && data.length > 0) {
-      const { error: updateError } = await supabase.from('active_products').update(payload).eq('item_id', item_id);
-      if (updateError) {
-        console.error('setAvailability update error', updateError);
-        throw updateError;
-      }
-    } else {
-      const { error: insertError } = await supabase.from('active_products').insert(payload);
-      if (insertError) {
-        console.error('setAvailability insert error', insertError);
-        throw insertError;
-      }
-    }
+    await upsertActiveProductsRows([payload]);
   } catch (err) {
     console.error('setAvailability exception', err);
     throw err;
@@ -117,13 +144,9 @@ export async function setAvailability(item_id: string, is_available: boolean, up
  */
 export async function fetchAvailabilityMap(): Promise<Record<string, boolean>> {
   try {
-    const { data, error } = await supabase.from('active_products').select('item_id,is_available');
-    if (error) {
-      console.warn('fetchAvailabilityMap error', error);
-      return {};
-    }
+    const data = await readActiveProductsRows();
     const map: Record<string, boolean> = {};
-    (data as any[] ?? []).forEach((r) => {
+    (data as ActiveProductRow[] ?? []).forEach((r) => {
       if (r?.item_id) map[r.item_id] = !!r.is_available;
     });
     return map;
@@ -234,19 +257,18 @@ export async function setProductOrder(item_ids: string[], updated_by?: string | 
   if (!item_ids || item_ids.length === 0) return;
   const now = new Date().toISOString();
 
-  // Avoid bulk upsert to keep compatibility with non-pro plans.
-  const updates = item_ids.map((id, index) => (
-    supabase
-      .from('active_products')
-      .update({ sort_order: index, updated_by: updated_by ?? null, updated_at: now })
-      .eq('item_id', id)
-  ));
+  const rows: ActiveProductRow[] = item_ids.map((id, index) => ({
+    item_id: id,
+    sort_order: index,
+    updated_by: updated_by ?? null,
+    updated_at: now,
+  }));
 
-  const results = await Promise.all(updates);
-  const firstError = results.find((r) => r.error)?.error;
-  if (firstError) {
-    console.error('setProductOrder error', firstError);
-    throw firstError;
+  try {
+    await upsertActiveProductsRows(rows);
+  } catch (error) {
+    console.error('setProductOrder error', error);
+    throw error;
   }
 }
 

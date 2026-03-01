@@ -89,7 +89,6 @@
 .page-clock {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    margin-bottom: 20px;
 
     &__divider {
         opacity: 0.65;
@@ -98,6 +97,11 @@
     &__24 {
         font-weight: 500;
         opacity: 0.9;
+    }
+
+    &__shift {
+        font-weight: 600;
+        opacity: 0.95;
     }
 }
 
@@ -180,7 +184,7 @@
         align-items: center;
         gap: 3px;
 
-            button {
+        button {
             width: 35px;
             height: 30px;
             padding: 0;
