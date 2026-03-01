@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
+import { insertSampleRecord } from '../../../lib/sampleRecordsClient';
 import { fetchActiveProductIds, setActiveProduct, subscribeActiveProducts, setAvailability as setAvailabilityServer, fetchAvailabilityMap, subscribeAvailability, setProductOrder } from '../../../lib/activeProducts';
 import { pickNextExtra, previewNextExtra, loadRotationState, saveRotationState, syncRotationToActiveOrder } from '../../../utils/sampleRotation';
 import { stripItemNumberPrefix } from '../../../utils/itemNumber';
 import { useProductionDay } from '../../../hooks/useProductionDay';
+import { toast } from 'react-toastify';
 import './ExtraSample.scss';
 import { IoRemoveCircleOutline } from 'react-icons/io5';
 
@@ -389,7 +391,6 @@ const ExtraSample: React.FC = () => {
   // Persist to server on demand
   const saveSampleRecord = async () => {
     setSaving(true);
-    setSaveInfo(null);
     try {
       const activeProductsList = activeIds
         .map((id) => products.find((p) => p.id === id || p.item_number === id))
@@ -419,9 +420,8 @@ const ExtraSample: React.FC = () => {
             console.warn('Failed updating rotation state for fallback pick', e);
           }
         } else {
-          setSaveInfo('No eligible extra to pick');
+          toast.error('No eligible extra to pick');
           setSaving(false);
-          setTimeout(() => setSaveInfo(null), 3000);
           return;
         }
       }
@@ -439,33 +439,13 @@ const ExtraSample: React.FC = () => {
 
       const sampledAt = getSampledAt(selectedHour);
 
-      // Testing mode: always INSERT a new record and use cycle_number
-      // to track multiple samples in the same hour.
-      const { data: latestCycleRow, error: fetchError } = await supabase
-        .from('sample_records')
-        .select('cycle_number')
-        .eq('hour_code', selectedHour)
-        .order('cycle_number', { ascending: false })
-        .limit(1);
-
-      if (fetchError) {
-        console.error('Failed fetching latest cycle_number', fetchError);
-        setSaveInfo(`Fetch failed: ${fetchError.message ?? String(fetchError)}`);
-        setSaving(false);
-        setTimeout(() => setSaveInfo(null), 3000);
-        return;
-      }
-
-      const previousCycle = Number(latestCycleRow?.[0]?.cycle_number ?? 0);
-      const nextCycle = Number.isFinite(previousCycle) ? previousCycle + 1 : 1;
-
       const payload = {
         production_day_id: null,  // Database expects UUID, not date string
         hour_code: selectedHour,
         sampled_at: sampledAt,
         active_products: activeProductsList,
         extra_product: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
-        cycle_number: nextCycle,
+        cycle_number: 0,
         notes: {
           debug_mode: 'rotation-test',
           predicted_extra: selectedExtraKey ? stripItemNumberPrefix(selectedExtraKey) : null,
@@ -475,28 +455,23 @@ const ExtraSample: React.FC = () => {
         },
       } as any;
 
-      const { error } = await supabase
-        .from('sample_records')
-        .insert([payload])
-        .select();
+      const result = await insertSampleRecord(payload);
 
-      if (!error) {
-        setSaveInfo(`Saved to server (cycle ${nextCycle})`);
-        setDebugActionFlags({ dragReorder: false, manualExtraSet: false });
+      if (!result.ok) {
+        console.error('Failed saving sample_records', { details: result.error });
+        toast.error(`Save failed: ${result.error}`);
+        return;
       }
 
-      if (error) {
-        console.error('Failed saving sample_records', error);
-        setSaveInfo(`Save failed: ${error.message ?? String(error)}`);
-      }
+      toast.success('Saved to server');
+      setDebugActionFlags({ dragReorder: false, manualExtraSet: false });
 
       // leave the extra selection highlighted in the UI after taking the sample
     } catch (err) {
       console.error('Save exception', err);
-      setSaveInfo(`Save exception: ${String(err)}`);
+      toast.error(`Save exception: ${String(err)}`);
     } finally {
       setSaving(false);
-      setTimeout(() => setSaveInfo(null), 4000);
     }
   };
 

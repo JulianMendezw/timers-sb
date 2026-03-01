@@ -51,6 +51,12 @@ const TimerView: React.FC<Props> = ({
     setMdAM,
     setSamplesAM,
 }) => {
+    const now24 = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+
     const timeSplited = (t: string, highlight = false, ampm?: boolean | null) => {
         const [hours, minutes] = t.split(':');
         return (
@@ -67,9 +73,10 @@ const TimerView: React.FC<Props> = ({
         <div className="timer-page">
             <header className="page-header">
                 <div className="page-header__left">
-                    <h1 className="page-title">QA Timers SB</h1>
                     <div className="page-clock" aria-live="polite" title="Hora local">
                         {nowStr}
+                        <span className="page-clock__divider"> | </span>
+                        <span className="page-clock__24">{now24}</span>
                     </div>
                 </div>
 
