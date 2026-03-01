@@ -7,18 +7,10 @@
     font-weight: 300;
     /* small text */
     line-height: 1;
-    color: #9aa0a6;
+    color: var(--text);
     /* subtle gray */
     background: transparent;
-
-    /* Optional: slightly softer on light backgrounds */
-    @media (prefers-color-scheme: light) {
-        color: #8a8f97;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        color: #b6bcc3;
-    }
+    /* theme-aware via --muted */
 }
 
 /* If you ever need a gently separated footer line, uncomment:

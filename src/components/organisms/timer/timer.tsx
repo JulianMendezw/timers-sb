@@ -18,6 +18,8 @@ const TimerContainer: React.FC = () => {
     return (
         <TimerView
             {...hook}
+            theme={hook.theme}
+            toggleTheme={hook.toggleTheme}
             setKernelTime={setKernelTime}
             setEvalsTime={setEvalsTime}
             setMdTime={setMdTime}

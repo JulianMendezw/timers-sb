@@ -1,0 +1,98 @@
+// Global design tokens and base styles
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Suez+One&display=swap');
+
+// Typography
+$font-primary:   "Suez One", serif;
+$font-secondary: "Montserrat", sans-serif;
+
+// Brand Colors
+$sunbutter-yellow: #FFDE00;
+$sunbutter-blue:   #3DA9E1;
+$sunbutter-brown:  #4E2B1F;
+$sunbutter-white:  #FFFFFF;
+
+// Product/UI Accents
+$sunbutter-honey:  #F7941D;
+$sunbutter-red:    #E31837;
+
+// Mirror SASS tokens to CSS custom properties for runtime use
+html[data-theme='light'] {
+  --font-primary: #{$font-primary};
+  --font-secondary: #{$font-secondary};
+  --sunbutter-yellow: #{$sunbutter-yellow};
+  --sunbutter-blue: #{$sunbutter-blue};
+  --sunbutter-brown: #{$sunbutter-brown};
+  --sunbutter-white: #{$sunbutter-white};
+  --sunbutter-honey: #{$sunbutter-honey};
+  --sunbutter-red: #{$sunbutter-red};
+
+  /* UI tokens for light theme */
+  --bg: #ffffff;
+  --panel-bg: #f5f3f1; /* light panel for lists */
+  --bg-elevated: var(--panel-bg);
+  --heading-color: #4E2B1F; /* brown headings in light */
+  --text: #4E2B1F; /* brown headings/text */
+  --muted: #6b7280;
+  --color-border: #e6e6e6;
+  --accent: var(--sunbutter-blue);
+  --input-bg: #ffffff;
+  --input-border: #24303a;
+
+  --success: #16a34a;
+  --success-bg: #ecfdf5;
+  --danger: #dc2626;
+}
+
+html[data-theme='dark'] {
+  --font-primary: #{$font-primary};
+  --font-secondary: #{$font-secondary};
+  --sunbutter-yellow: #{$sunbutter-yellow};
+  --sunbutter-blue: #{$sunbutter-blue};
+  --sunbutter-brown: #{$sunbutter-brown};
+  --sunbutter-white: #{$sunbutter-white};
+  --sunbutter-honey: #{$sunbutter-honey};
+  --sunbutter-red: #{$sunbutter-red};
+
+  /* UI tokens for dark theme (beige page + dark panels) */
+  --bg: #e9e5df; /* warm page background */
+  --panel-bg: #0f1724; /* dark panels */
+  --bg-elevated: var(--panel-bg);
+  --bg: var(--panel-bg);
+  --text: var(--sunbutter-white);
+  --heading-color: var(--sunbutter-white);
+  --muted: rgba(0,0,0,0.5);
+  --color-border: #2b2b2b;
+  --accent: var(--sunbutter-blue);
+  --input-bg: var(--panel-bg);
+  --input-border: #24303a;
+
+  --success: #34a853;
+  --success-bg: rgba(52,168,83,0.12);
+  --danger: #ef4444;
+}
+
+// Make fonts 20% smaller globally (scales rem-based sizing)
+html {
+  font-size: 70%;
+}
+
+// Base body styles
+body {
+  font-family: var(--font-secondary, #{$font-secondary});
+  color: var(--text, #{$sunbutter-brown});
+  background-color: var(--bg, #{$sunbutter-white});
+}
+
+// Headings use the display font
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary, #{$font-primary});
+  color: var(--heading-color, var(--sunbutter-brown));
+  margin: 0;
+}
+
+// Utility: use brand accent for primary buttons
+.btn-primary {
+  background-color: $sunbutter-blue;
+  color: $sunbutter-white;
+  border: none;
+}

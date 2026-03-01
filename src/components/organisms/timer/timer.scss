@@ -39,7 +39,51 @@
         display: flex;
         align-items: center;
         gap: .5rem;
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+
+            .theme-toggle,
+            .sound-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border: 1px solid var(--color-border, #2b2b2b);
+                background: var(--input-bg, transparent);
+                color: var(--text);
+                padding: .35rem .5rem;
+                border-radius: 6px;
+                font-size: 1.05rem;
+                line-height: 1;
+                cursor: pointer;
+            }
+
+            .theme-toggle svg,
+            .sound-toggle svg {
+                width: 1.15em;
+                height: 1.15em;
+            }
+        }
     }
+}
+
+.page-header__right .peanut-card {
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    width: auto;
+}
+
+.page-header__right .peanut-card__body {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-header__right .peanut-card__title {
+    margin: 0;
 }
 
 .page-clock {
@@ -49,14 +93,14 @@
 }
 
 .sound-toggle {
-    border: 1px #cbd5e1;
+    border: 1px solid var(--color-border, #cbd5e1);
     border-radius: 6px;
     padding: .35rem .6rem;
     font-weight: 100;
     cursor: pointer;
 
     &.on {
-        border-color: #008cc6;
+        border-color: var(--accent);
     }
 }
 
@@ -97,7 +141,7 @@
             display: flex;
             align-items: center;
             font-weight: 400;
-            color: #fff;
+            color: var(--text);
             margin: 0.2rem;
             font-variant-numeric: tabular-nums;
 
@@ -107,16 +151,15 @@
 
             .ampm-badge {
                 margin-left: .35rem;
-                font-size: .7rem;
+                font-size: .65rem;
                 font-weight: 700;
                 letter-spacing: .5px;
-                color: #94a3b8;
-                /* slate-400 */
+                color: var(--text);
             }
         }
 
         .animated-time.highlight-red {
-            color: #008cc6;
+            color: var(--accent);
             font-weight: bold;
             animation: pulse 2s infinite;
         }
@@ -128,21 +171,21 @@
         align-items: center;
         gap: 3px;
 
-        button {
+            button {
             width: 35px;
             height: 30px;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #1e1e1e;
+            background-color: var(--input-bg);
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            color: #fff;
+            color: var(--text);
 
             &:hover {
-                background-color: #222;
+                filter: brightness(0.96);
             }
         }
     }
@@ -157,7 +200,7 @@
 /* Global animated time (fallbacks) */
 .animated-time {
     font-size: 2rem;
-    color: white;
+    color: var(--text);
 }
 
 /* Animations */

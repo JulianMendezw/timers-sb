@@ -1,6 +1,7 @@
 import React from 'react';
-import { CiAlarmOn, CiRedo } from 'react-icons/ci';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
+import { IoAlarmOutline, IoRefresh  } from "react-icons/io5";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdNotifications, MdNotificationsOff } from 'react-icons/md';
+import { FaMoon, FaSun } from 'react-icons/fa';
 import './timer.scss';
 import TimeModal from '../../atoms/modalSetTime/setTimeModal';
 import PeanutTestShift from '../../atoms/PeanutTestShift/PeanutTestShift';
@@ -39,6 +40,8 @@ const TimerView: React.FC<Props> = ({
     saveFromModal,
     nextTest,
     toggleSound,
+    theme,
+    toggleTheme,
     setKernelTime,
     setEvalsTime,
     setMdTime,
@@ -71,13 +74,26 @@ const TimerView: React.FC<Props> = ({
                 </div>
 
                 <div className="page-header__right">
-                    <button
-                        className={`sound-toggle ${soundOn ? 'on' : 'off'}`}
-                        onClick={toggleSound}
-                        title={soundOn ? 'Disable sound' : 'Enable sound'}
-                    >
-                        🔔 {soundOn ? 'On' : 'Off'}
-                    </button>
+                    <PeanutTestShift />
+                    <div className="header-controls">
+                        <button
+                            className={`theme-toggle ${theme === 'light' ? 'light' : 'dark'}`}
+                            onClick={toggleTheme}
+                            title={theme === 'light' ? 'Switch to dark' : 'Switch to light'}
+                            aria-label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+                        >
+                            {theme === 'light' ? <FaMoon /> : <FaSun />}
+                        </button>
+
+                        <button
+                            className={`sound-toggle ${soundOn ? 'on' : 'off'}`}
+                            onClick={toggleSound}
+                            title={soundOn ? 'Disable sound' : 'Enable sound'}
+                            aria-pressed={soundOn}
+                        >
+                            {soundOn ? <MdNotifications /> : <MdNotificationsOff />}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -103,7 +119,7 @@ const TimerView: React.FC<Props> = ({
                 </div>
                 <div className="timer-actions">
                     <button onClick={() => openModal('kernel', kernelTime)}>
-                        <CiAlarmOn />
+                       <IoAlarmOutline />
                     </button>
                     <button
                         onClick={() =>
@@ -111,7 +127,7 @@ const TimerView: React.FC<Props> = ({
                         }
                         title="+40"
                     >
-                        <CiRedo />
+                        <IoRefresh />
                     </button>
                 </div>
             </section>
@@ -130,7 +146,7 @@ const TimerView: React.FC<Props> = ({
                 </div>
                 <div className="timer-actions">
                     <button onClick={() => openModal('evals', evalsTime)}>
-                        <CiAlarmOn />
+                       <IoAlarmOutline />
                     </button>
                     <button
                         onClick={() =>
@@ -138,7 +154,7 @@ const TimerView: React.FC<Props> = ({
                         }
                         title="+50"
                     >
-                        <CiRedo />
+                        <IoRefresh />
                     </button>
                 </div>
             </section>
@@ -153,7 +169,7 @@ const TimerView: React.FC<Props> = ({
                 </div>
                 <div className="timer-actions">
                     <button onClick={() => openModal('md', mdTime)}>
-                        <CiAlarmOn />
+                       <IoAlarmOutline />
                     </button>
                     <button
                         onClick={() =>
@@ -161,7 +177,7 @@ const TimerView: React.FC<Props> = ({
                         }
                         title="+110"
                     >
-                        <CiRedo />
+                        <IoRefresh />
                     </button>
                 </div>
             </section>
@@ -176,7 +192,7 @@ const TimerView: React.FC<Props> = ({
                 </div>
                 <div className="timer-actions">
                     <button onClick={() => openModal('samples', samplesTime)}>
-                        <CiAlarmOn />
+                       <IoAlarmOutline />
                     </button>
                     <button
                         onClick={() =>
@@ -184,7 +200,7 @@ const TimerView: React.FC<Props> = ({
                         }
                         title="+120"
                     >
-                        <CiRedo />
+                        <IoRefresh />
                     </button>
                 </div>
             </section>
@@ -193,7 +209,6 @@ const TimerView: React.FC<Props> = ({
                 <ExtraSample />
             </div>
 
-            <PeanutTestShift />
         </div>
     );
 };

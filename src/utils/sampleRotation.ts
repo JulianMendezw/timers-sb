@@ -39,62 +39,66 @@ export function saveRotationState(s: RotationState) {
  * 4) When all active products have been completed, reset the cycle (pending = activeIds, completed = []).
  */
 export function pickNextExtra(activeIds: string[], availability?: Record<string, boolean> | null, stateIn?: RotationState) {
-  const state = stateIn ? { ...stateIn, pending: [...stateIn.pending], completed: [...stateIn.completed] } : loadRotationState();
+  let state = stateIn ? { ...stateIn, pending: [...stateIn.pending], completed: [...stateIn.completed], lastActiveSnapshot: [...(stateIn.lastActiveSnapshot ?? [])] } : loadRotationState();
 
-  // canonicalize activeIds to unique list preserving order
   const active = Array.from(new Set(activeIds));
-  // determine eligible items (respect availability if provided)
   const eligible = availability ? active.filter((id) => availability[id] !== false) : active;
 
-  // if no active products or no eligible products, clear state and return null
   if (active.length === 0 || eligible.length === 0) {
     const cleared = defaultState();
     saveRotationState(cleared);
     return { next: null, state: cleared };
   }
 
-  // detect new product(s) (respect availability if provided)
+  // SYNC: Check if order changed from last snapshot (drag reorder detection)
+  const orderChanged = 
+    state.lastActiveSnapshot.length !== active.length ||
+    state.lastActiveSnapshot.some((id, i) => active[i] !== id);
+
+  if (orderChanged) {
+    // Reorder pending/completed to match new activeIds order
+    state.pending = state.pending
+      .filter((id) => active.includes(id) && (!availability || availability[id] !== false))
+      .sort((a, b) => active.indexOf(a) - active.indexOf(b));
+
+    state.completed = state.completed
+      .filter((id) => active.includes(id) && (!availability || availability[id] !== false))
+      .sort((a, b) => active.indexOf(a) - active.indexOf(b));
+  }
+
+  // Detect truly NEW products (not in lastActiveSnapshot at all)
   const lastSnap = state.lastActiveSnapshot ?? [];
   const newProducts = active.filter((id) => !lastSnap.includes(id));
   const viableNew = availability ? newProducts.filter((id) => availability[id] !== false) : newProducts;
+  
   if (viableNew.length > 0) {
-    // pick the first new product (priority)
     const pick = viableNew[0];
-    // ensure it's not in completed/pending
     state.pending = state.pending.filter((i) => i !== pick);
     state.completed = state.completed.filter((i) => i !== pick);
-    // update snapshot
     state.lastActiveSnapshot = active;
     saveRotationState(state);
     return { next: pick, state };
   }
 
-  // prune completed to current active/eligible items so old ids don't block cycles
+  // Prune completed/pending to current active/eligible
   state.completed = state.completed.filter((id) => active.includes(id) && (!availability || availability[id] !== false));
+  state.pending = state.pending.filter((id) => active.includes(id) && !state.completed.includes(id) && (!availability || availability[id] !== false));
 
-  // ensure pending contains only currently active items and excludes completed
-  state.pending = state.pending.filter((id) => active.includes(id) && !state.completed.includes(id));
-  if (availability) {
-    state.pending = state.pending.filter((id) => availability[id] !== false);
-  }
-
-  // If pending is empty, initialize from active minus completed
+  // Initialize pending if empty
   if (state.pending.length === 0) {
-    // If completed already contains all eligible -> reset cycle
     const completedSet = new Set(state.completed);
     const allCompleted = eligible.every((id) => completedSet.has(id));
     if (allCompleted) {
       state.completed = [];
-      state.pending = [...eligible];
+      state.pending = [...eligible]; // Preserve activeIds order
     } else {
-      // Build pending from eligible excluding completed
       state.pending = eligible.filter((id) => !state.completed.includes(id));
     }
     state.lastActiveSnapshot = active;
     saveRotationState(state);
   }
 
-  // pick first pending that is active
+  // Pick first pending that is eligible
   let pick: string | null = null;
   while (state.pending.length > 0) {
     const candidate = state.pending.shift() as string;
@@ -103,10 +107,9 @@ export function pickNextExtra(activeIds: string[], availability?: Record<string,
       state.completed.push(candidate);
       break;
     }
-    // otherwise skip it (it might have gone inactive or unavailable)
   }
 
-  // If we didn't find any pick, try reinitializing once more
+  // Fallback: reinitialize if no pick found
   if (!pick) {
     state.pending = eligible.filter((id) => !state.completed.includes(id));
     if (state.pending.length > 0) {
@@ -115,12 +118,10 @@ export function pickNextExtra(activeIds: string[], availability?: Record<string,
     }
   }
 
-  // If after picking we've completed all active, reset for next cycle
+  // Check cycle completion
   const completedSet2 = new Set(state.completed);
   if (eligible.every((id) => completedSet2.has(id))) {
-    // next cycle will start fresh on next invocation; keep lastActiveSnapshot equal
     state.pending = [];
-    // state.completed remains full until next pick resets it
   }
 
   saveRotationState(state);
@@ -185,6 +186,37 @@ export function resetRotation() {
   const s = defaultState();
   saveRotationState(s);
   return s;
+}
+
+/**
+ * Call this when activeIds order changes (e.g., user drag-reorder)
+ * to sync the rotation queue to the new order without losing progress.
+ */
+export function syncRotationToActiveOrder(activeIds: string[], availability?: Record<string, boolean> | null) {
+  const state = loadRotationState();
+  const active = Array.from(new Set(activeIds));
+
+  // Check if order changed (not just set membership)
+  const orderChanged = 
+    state.lastActiveSnapshot.length !== active.length ||
+    state.lastActiveSnapshot.some((id, i) => active[i] !== id);
+
+  if (!orderChanged) return state; // No changes needed
+
+  // Reorder pending and completed to match new activeIds order
+  state.pending = state.pending
+    .filter((id) => active.includes(id) && (!availability || availability[id] !== false))
+    .sort((a, b) => active.indexOf(a) - active.indexOf(b));
+
+  state.completed = state.completed
+    .filter((id) => active.includes(id) && (!availability || availability[id] !== false))
+    .sort((a, b) => active.indexOf(a) - active.indexOf(b));
+
+  // Update snapshot to reflect new order
+  state.lastActiveSnapshot = active;
+  saveRotationState(state);
+  
+  return state;
 }
 
 export default { loadRotationState, saveRotationState, pickNextExtra, resetRotation };

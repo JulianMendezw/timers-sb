@@ -1,12 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { fetchActiveProductIds, setActiveProduct, subscribeActiveProducts, setAvailability as setAvailabilityServer, fetchAvailabilityMap, subscribeAvailability, setProductOrder } from '../../../lib/activeProducts';
-import { pickNextExtra, previewNextExtra, loadRotationState, saveRotationState } from '../../../utils/sampleRotation';
+import { pickNextExtra, previewNextExtra, loadRotationState, saveRotationState, syncRotationToActiveOrder } from '../../../utils/sampleRotation';
+import { stripItemNumberPrefix } from '../../../utils/itemNumber';
+import { useProductionDay } from '../../../hooks/useProductionDay';
 import './ExtraSample.scss';
 import { IoRemoveCircleOutline } from 'react-icons/io5';
 
 type Product = {
   id: string;
+  customer?: string | null;
+  formula?: string | null;
+  pack_count?: number | string | null;
+  unit_size?: number | string | null;
+  unit_size_uom?: string | null;
+  container_1?: string | null;
   product_name?: string;
   name?: string;
   item_number?: string;
@@ -16,6 +24,7 @@ type Product = {
   line_number?: string | number;
   metal_detector?: string | boolean;
   country_code?: string;
+  usda_flag?: boolean;
 };
 
 const normalizeCountryCode = (code?: string) => {
@@ -69,6 +78,25 @@ const renderCountryFlag = (code?: string) => {
   return null;
 };
 
+const formatPackSize = (packCountRaw?: number | string | null, unitSizeRaw?: number | string | null, unitSizeUom?: string | null) => {
+  if (unitSizeRaw == null || unitSizeRaw === '') return null;
+  const packCount = Number(packCountRaw);
+  const unitSize = String(unitSizeRaw);
+  const uomNormalized = unitSizeUom ? String(unitSizeUom).trim() : '';
+  const uom = uomNormalized.toLowerCase() === 'lb' ? '#' : uomNormalized;
+  const sizeText = uom === '#'
+    ? `${unitSize}${uom}`
+    : `${unitSize}${uom ? ` ${uom}` : ''}`;
+  if (Number.isFinite(packCount) && packCount > 1) return `${packCount}x ${sizeText}`;
+  return sizeText;
+};
+
+const formatMainLine = (p: Product) => {
+  const packSize = formatPackSize(p.pack_count, p.unit_size, p.unit_size_uom);
+  const parts = [stripItemNumberPrefix(p.item_number), p.customer, p.formula, p.container_1, packSize].filter(Boolean);
+  return parts.join(' | ');
+};
+
 const ExtraSample: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState('');
@@ -83,8 +111,15 @@ const ExtraSample: React.FC = () => {
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [selectedHour, setSelectedHour] = useState<number>(new Date().getHours());
+  const [debugActionFlags, setDebugActionFlags] = useState({
+    dragReorder: false,
+    manualExtraSet: false,
+  });
+  const { getSampledAt } = useProductionDay();
   const serverActiveLoaded = useRef(false);
   const prevActiveRef = useRef<string[]>([]);
+  const rotationInitializedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -100,6 +135,12 @@ const ExtraSample: React.FC = () => {
           if (Date.now() - parsed.ts < 24 * 60 * 60 * 1000) {
             const mappedCached: Product[] = parsed.rows.map((r: any) => ({
               id: r.item_id ?? r.id ?? r.product_id ?? String(Math.random()),
+              customer: r.customer ?? null,
+              formula: r.formula ?? r.formula_name ?? null,
+              pack_count: r.pack_count ?? r.packCount ?? null,
+              unit_size: r.unit_size ?? r.unitSize ?? null,
+              unit_size_uom: r.unit_size_uom ?? r.unitSizeUom ?? null,
+              container_1: r.container_1 ?? r.container ?? null,
               product_name: r.description ?? r.product_name ?? r.name ?? r.product ?? r.itemNumber ?? r.item_number,
               name: r.description ?? r.name ?? r.product_name ?? r.product,
               item_number: r.item_id ?? r.item_number ?? r.itemNumber ?? r.id ?? '',
@@ -109,6 +150,7 @@ const ExtraSample: React.FC = () => {
               line_number: r.line_number ?? r.line ?? r.line_no ?? null,
               metal_detector: r.metal_detector ?? r.md ?? null,
               country_code: r.country_code ?? r.country ?? null,
+              usda_flag: !!r.usda_flag,
             }));
             if (mounted) {
               setProducts(mappedCached);
@@ -149,6 +191,12 @@ const ExtraSample: React.FC = () => {
       if (mounted) {
         const mapped: Product[] = (rows ?? []).map((r: any) => ({
           id: r.item_id ?? r.id ?? r.product_id ?? String(Math.random()),
+          customer: r.customer ?? null,
+          formula: r.formula ?? r.formula_name ?? null,
+          pack_count: r.pack_count ?? r.packCount ?? null,
+          unit_size: r.unit_size ?? r.unitSize ?? null,
+          unit_size_uom: r.unit_size_uom ?? r.unitSizeUom ?? null,
+          container_1: r.container_1 ?? r.container ?? null,
           product_name: r.description ?? r.product_name ?? r.name ?? r.product ?? r.itemNumber ?? r.item_number,
           name: r.description ?? r.name ?? r.product_name ?? r.product,
           item_number: r.item_id ?? r.item_number ?? r.itemNumber ?? r.id ?? '',
@@ -158,6 +206,7 @@ const ExtraSample: React.FC = () => {
           line_number: r.line_number ?? r.line ?? r.line_no ?? null,
           metal_detector: r.metal_detector ?? r.md ?? null,
           country_code: r.country_code ?? r.country ?? null,
+          usda_flag: !!r.usda_flag,
         }));
         setProducts(mapped);
 
@@ -345,7 +394,10 @@ const ExtraSample: React.FC = () => {
       const activeProductsList = activeIds
         .map((id) => products.find((p) => p.id === id || p.item_number === id))
         .filter(Boolean)
-        .map((p) => p?.item_number ?? p?.product_name ?? p?.id ?? '');
+        .map((p) => {
+          if (p?.item_number) return stripItemNumberPrefix(p.item_number);
+          return p?.product_name ?? p?.id ?? '';
+        });
 
       // Always let the rotation algorithm pick the extra when taking a sample now
       const pick = pickNextExtra(activeIds, availability);
@@ -385,24 +437,60 @@ const ExtraSample: React.FC = () => {
 
       const extra = products.find((p) => p.id === selectedExtraKey || p.item_number === selectedExtraKey);
 
+      const sampledAt = getSampledAt(selectedHour);
+
+      // Testing mode: always INSERT a new record and use cycle_number
+      // to track multiple samples in the same hour.
+      const { data: latestCycleRow, error: fetchError } = await supabase
+        .from('sample_records')
+        .select('cycle_number')
+        .eq('hour_code', selectedHour)
+        .order('cycle_number', { ascending: false })
+        .limit(1);
+
+      if (fetchError) {
+        console.error('Failed fetching latest cycle_number', fetchError);
+        setSaveInfo(`Fetch failed: ${fetchError.message ?? String(fetchError)}`);
+        setSaving(false);
+        setTimeout(() => setSaveInfo(null), 3000);
+        return;
+      }
+
+      const previousCycle = Number(latestCycleRow?.[0]?.cycle_number ?? 0);
+      const nextCycle = Number.isFinite(previousCycle) ? previousCycle + 1 : 1;
+
       const payload = {
-        production_day_id: null,
-        sampled_at: new Date().toISOString(),
+        production_day_id: null,  // Database expects UUID, not date string
+        hour_code: selectedHour,
+        sampled_at: sampledAt,
         active_products: activeProductsList,
-        extra_product: extra ? (extra.item_number ?? extra.product_name ?? extra.id) : null,
-        cycle_number: 0,
-        notes: null,
+        extra_product: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
+        cycle_number: nextCycle,
+        notes: {
+          debug_mode: 'rotation-test',
+          predicted_extra: selectedExtraKey ? stripItemNumberPrefix(selectedExtraKey) : null,
+          selected_extra: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
+          drag_reorder_since_last_sample: debugActionFlags.dragReorder,
+          manual_set_extra_since_last_sample: debugActionFlags.manualExtraSet,
+        },
       } as any;
 
-      const { error } = await supabase.from('sample_records').insert([payload]).select();
+      const { error } = await supabase
+        .from('sample_records')
+        .insert([payload])
+        .select();
+
+      if (!error) {
+        setSaveInfo(`Saved to server (cycle ${nextCycle})`);
+        setDebugActionFlags({ dragReorder: false, manualExtraSet: false });
+      }
+
       if (error) {
         console.error('Failed saving sample_records', error);
         setSaveInfo(`Save failed: ${error.message ?? String(error)}`);
-      } else {
-        setSaveInfo('Saved to server');
-
-        // leave the extra selection highlighted in the UI after taking the sample
       }
+
+      // leave the extra selection highlighted in the UI after taking the sample
     } catch (err) {
       console.error('Save exception', err);
       setSaveInfo(`Save exception: ${String(err)}`);
@@ -435,6 +523,43 @@ const ExtraSample: React.FC = () => {
     }
   }, [availability]);
 
+  // Load rotation state on mount and sync extraId ONCE
+  useEffect(() => {
+    if (rotationInitializedRef.current) return;
+    if (activeIds.length === 0 || products.length === 0) return;
+
+    // Wait for availability to be initialized for all activeIds
+    const allAvailabilityLoaded = activeIds.every(id => typeof availability[id] !== 'undefined');
+    if (!allAvailabilityLoaded) return;
+
+    rotationInitializedRef.current = true;
+
+    try {
+      const rotationState = loadRotationState();
+
+      if (rotationState.completed && rotationState.completed.length > 0) {
+        // Try to restore the last picked product
+        const lastPicked = rotationState.completed[rotationState.completed.length - 1];
+        const product = products.find((p) => p.id === lastPicked || p.item_number === lastPicked);
+        if (product && activeIds.includes(lastPicked) && availability[lastPicked] !== false) {
+          setExtraId(product.id);
+          return;
+        }
+      }
+
+      // If no completed state or product not found, preview the next one
+      const preview = previewNextExtra(activeIds, availability);
+      if (preview?.next) {
+        const product = products.find((p) => p.id === preview.next || p.item_number === preview.next);
+        if (product) {
+          setExtraId(product.id);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed loading rotation state on init', e);
+    }
+  }, [activeIds, products, availability]);
+
   // ensure availability has entries for activeIds (default true)
   useEffect(() => {
     if (!activeIds || activeIds.length === 0) return;
@@ -461,6 +586,7 @@ const ExtraSample: React.FC = () => {
   // Ensure there is always a selected extra when possible
   useEffect(() => {
     if (!activeIds || activeIds.length === 0) return;
+    if (!rotationInitializedRef.current) return; // Wait for rotation init to complete first
 
     const currentExtraKey = products.find((x) => x.id === extraId)?.item_number ?? extraId;
     const currentIsActive = currentExtraKey ? activeIds.includes(currentExtraKey) : false;
@@ -621,8 +747,12 @@ const ExtraSample: React.FC = () => {
 
     // Optimistic UI update
     setActiveIds(newOrder);
+    setDebugActionFlags((prev) => ({ ...prev, dragReorder: true }));
     setDraggedId(null);
     setDragOverId(null);
+
+    // SYNC: Update rotation state to match new order
+    syncRotationToActiveOrder(newOrder, availability);
 
     // Persist to server
     try {
@@ -643,106 +773,107 @@ const ExtraSample: React.FC = () => {
 
   return (
     <aside className="extra-sample-box">
-      <div className="extra-sample-header input-wrap">
+      <div className="extra-sample-header">
         <h3>Products</h3>
-        <div className="search-wrap">
-          <input
-            aria-label="Search active products"
-            placeholder="Search product name or item..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => {
-              setInputFocused(true);
-              setShowSuggestions(true);
-            }}
-            onBlur={() => setInputFocused(false)}
-            onKeyDown={onInputKeyDown}
-            autoComplete="off"
-          />
-
-          {fetchInfo && <div className="fetch-info muted">{fetchInfo}</div>}
-
-          {visibleSuggestions.length > 0 && (
-            <ul className="suggestions-dropdown" role="listbox">
-              {visibleSuggestions.map((p, idx) => {
-                const key = p.item_number ?? p.id;
-                const isActive = activeIds.includes(key);
-                const isFocused = idx === focusedIndex;
-                const itemDisplay = p.item_number?.includes('SB') ? p.item_number.split('SB')[1] : p.item_number ?? '';
-                const metalLabel = typeof p.metal_detector === 'boolean'
-                  ? (p.metal_detector ? 'MD' : null)
-                  : (p.metal_detector ? `MD ${p.metal_detector}` : null);
-                return (
-                  <li key={p.id} className={`suggestion-item ${isFocused ? 'focused' : ''}`} role="option">
-                    <button
-                      type="button"
-                      className={`suggestion-main ${extraId === p.id ? 'selected' : ''}`}
-                      onMouseDown={(ev) => ev.preventDefault()}
-                      onClick={() => {
-                        setExtraId(p.id);
-                        setQuery(p.product_name ?? p.item_number ?? '');
-                        setShowSuggestions(false);
-                        setFocusedIndex(-1);
-                      }}
-                    >
-                      <div className="product-main">{highlightMatch(p.product_name ?? p.name, query) as any}</div>
-                      <div className="product-meta">
-                        {itemDisplay && <span className="meta-item">{highlightMatch(itemDisplay, query) as any}</span>}
-                        {p.special_sampling_flag && (
-                          <span className="meta-item meta-icon jar-icon" title="Special sampling" aria-label="Special sampling">
-                            <svg className="icon-jar" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                              <path d="M7 4h10v3H7z" fill="currentColor" />
-                              <path d="M8 7h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9a2 2 0 0 1 2-2z" fill="currentColor" />
-                              <rect x="9" y="10" width="6" height="7" rx="1" fill="#7a4f1d" />
-                            </svg>
-                          </span>
-                        )}
-                        {p.special_recipe_flag && <span className="meta-item meta-recipe">Recipe</span>}
-                        {p.line_number !== null && p.line_number !== undefined && p.line_number !== '' && (
-                          <span className="meta-item">Line {p.line_number}</span>
-                        )}
-                        {metalLabel && <span className="meta-item">{metalLabel}</span>}
-                        {renderCountryFlag(p.country_code)}
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      className={`suggestion-add ${isActive ? 'active' : ''}`}
-                      onMouseDown={(ev) => ev.preventDefault()}
-                      onClick={async () => {
-                        const dbKey = p.item_number ?? p.id;
-                        // optimistic UI update using dbKey
-                        const willBeActive = !isActive;
-                        setActiveIds((cur) => (cur.includes(dbKey) ? cur.filter((id) => id !== dbKey) : [...cur, dbKey]));
-                        // optimistically select the newly added product as extra
-                        if (willBeActive) setExtraId(p.id);
-                        try {
-                          await setActiveProduct(dbKey, willBeActive);
-                        } catch (err) {
-                          console.error('Failed persisting active toggle', err);
-                          setSaveInfo('Server save failed');
-                          // revert optimistic update
-                          setActiveIds((cur) => (cur.includes(dbKey) ? cur.filter((id) => id !== dbKey) : [...cur, dbKey]));
-                          // revert optimistic extra selection if it matches
-                          setExtraId((cur) => (cur === p.id ? null : cur));
-                        }
-                      }}
-                    >
-                      {isActive ? 'Active' : 'Add'}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
       </div>
 
       <div className="active-products">
-        <h4>Selected Active Products ({activeIds.length})</h4>
+        <div className="active-products-header">
+          <div className="search-wrap">
+            <input
+              aria-label="Search active products"
+              placeholder="Search product name or item..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => {
+                setInputFocused(true);
+                setShowSuggestions(true);
+              }}
+              onBlur={() => setInputFocused(false)}
+              onKeyDown={onInputKeyDown}
+              autoComplete="off"
+            />
+
+            {fetchInfo && <div className="fetch-info muted">{fetchInfo}</div>}
+
+            {visibleSuggestions.length > 0 && (
+              <ul className="suggestions-dropdown" role="listbox">
+                {visibleSuggestions.map((p, idx) => {
+                  const key = p.item_number ?? p.id;
+                  const isActive = activeIds.includes(key);
+                  const isFocused = idx === focusedIndex;
+                  const metalLabel = typeof p.metal_detector === 'boolean'
+                    ? (p.metal_detector ? 'MD' : null)
+                    : (p.metal_detector ? `MD ${p.metal_detector}` : null);
+                  const mainLine = formatMainLine(p) || (p.product_name ?? p.name ?? '');
+                  return (
+                    <li key={p.id} className={`suggestion-item ${isFocused ? 'focused' : ''}`} role="option">
+                      <button
+                        type="button"
+                        className={`suggestion-main ${extraId === p.id ? 'selected' : ''}`}
+                        onMouseDown={(ev) => ev.preventDefault()}
+                        onClick={() => {
+                          setExtraId(p.id);
+                          setQuery(p.product_name ?? p.item_number ?? '');
+                          setShowSuggestions(false);
+                          setFocusedIndex(-1);
+                        }}
+                      >
+                        <div className="product-main">{highlightMatch(mainLine, query) as any}</div>
+                        <div className="product-meta">
+                          {p.line_number !== null && p.line_number !== undefined && p.line_number !== '' && (
+                            <span className="meta-item">Line {p.line_number}</span>
+                          )}
+                          {metalLabel && <span className="meta-item">{metalLabel}</span>}
+                          {renderCountryFlag(p.country_code)}
+                          {p.special_sampling_flag && (
+                            <span className="meta-item meta-icon jar-icon" title="Special sampling" aria-label="Special sampling">
+                              <svg className="icon-jar" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                                <path d="M7 4h10v3H7z" fill="currentColor" />
+                                <path d="M8 7h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9a2 2 0 0 1 2-2z" fill="currentColor" />
+                                <rect x="9" y="10" width="6" height="7" rx="1" fill="#7a4f1d" />
+                              </svg>
+                            </span>
+                          )}
+                          {p.special_recipe_flag && <span className="meta-item meta-recipe">Recipe</span>}
+                          {p.usda_flag && <span className="meta-item meta-usda" title="USDA pricing">USDA</span>}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        className={`suggestion-add ${isActive ? 'active' : ''}`}
+                        onMouseDown={(ev) => ev.preventDefault()}
+                        onClick={async () => {
+                          const dbKey = p.item_number ?? p.id;
+                          // optimistic UI update using dbKey
+                          const willBeActive = !isActive;
+                          setActiveIds((cur) => (cur.includes(dbKey) ? cur.filter((id) => id !== dbKey) : [...cur, dbKey]));
+                          // optimistically select the newly added product as extra
+                          if (willBeActive) setExtraId(p.id);
+                          try {
+                            await setActiveProduct(dbKey, willBeActive);
+                          } catch (err) {
+                            console.error('Failed persisting active toggle', err);
+                            setSaveInfo('Server save failed');
+                            // revert optimistic update
+                            setActiveIds((cur) => (cur.includes(dbKey) ? cur.filter((id) => id !== dbKey) : [...cur, dbKey]));
+                            // revert optimistic extra selection if it matches
+                            setExtraId((cur) => (cur === p.id ? null : cur));
+                          }
+                        }}
+                      >
+                        {isActive ? 'Active' : 'Add'}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
         <div className="active-help muted">Mark availability for grabbing an extra; unavailable products will be skipped.</div>
         {activeIds.length === 0 && <p className="muted">No active products selected.</p>}
         <div className="active-list">
@@ -753,7 +884,7 @@ const ExtraSample: React.FC = () => {
             const isSelectedExtra = extraId === p.id;
             const isDragged = draggedId === id;
             const isDragOver = dragOverId === id;
-            const itemDisplay = p.item_number?.includes('SB') ? p.item_number.split('SB')[1] : p.item_number ?? '';
+
             const metalLabel = typeof p.metal_detector === 'boolean'
               ? (p.metal_detector ? 'MD' : null)
               : (p.metal_detector ? `MD ${p.metal_detector}` : null);
@@ -770,11 +901,13 @@ const ExtraSample: React.FC = () => {
                 className={`active-item ${isSelectedExtra ? 'selected' : ''} ${isDragged ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
               >
                 <div>
-                  <div className="product-main">
-                    {p.product_name ?? p.name}
-                  </div>
+                  <div className="product-main">{formatMainLine(p) || (p.product_name ?? p.name)}</div>
                   <div className="product-meta">
-                    {itemDisplay && <span className="meta-item">{itemDisplay}</span>}
+                    {p.line_number !== null && p.line_number !== undefined && p.line_number !== '' && (
+                      <span className="meta-item">Line {p.line_number}</span>
+                    )}
+                    {metalLabel && <span className="meta-item">{metalLabel}</span>}
+                    {renderCountryFlag(p.country_code)}
                     {p.special_sampling_flag && (
                       <span className="meta-item meta-icon jar-icon" title="Special sampling" aria-label="Special sampling">
                         <svg className="icon-jar" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -785,11 +918,7 @@ const ExtraSample: React.FC = () => {
                       </span>
                     )}
                     {p.special_recipe_flag && <span className="meta-item meta-recipe">Recipe</span>}
-                    {p.line_number !== null && p.line_number !== undefined && p.line_number !== '' && (
-                      <span className="meta-item">Line {p.line_number}</span>
-                    )}
-                    {metalLabel && <span className="meta-item">{metalLabel}</span>}
-                    {renderCountryFlag(p.country_code)}
+                    {p.usda_flag && <span className="meta-item meta-usda" title="USDA pricing">USDA</span>}
                   </div>
                 </div>
                 <div className="active-controls">
@@ -805,6 +934,7 @@ const ExtraSample: React.FC = () => {
                         return;
                       }
                       setExtraId(p.id);
+                      setDebugActionFlags((prev) => ({ ...prev, manualExtraSet: true }));
                     }}
                     disabled={isSelectedExtra}
                     aria-pressed={isSelectedExtra}
@@ -861,11 +991,27 @@ const ExtraSample: React.FC = () => {
           })}
         </div>
         {/* Predicted Next Extra removed — using picker and badges only */}
-
-        <div className="sample-actions">
-          <button type="button" className="take-sample" onClick={saveSampleRecord} disabled={saving}>
-            {saving ? 'Saving…' : 'Take Sample Now'}
-          </button>
+        <div className="next-extra">
+          <div className="hour-picker-row">
+            <div className="hour-picker-section">
+              <label htmlFor="hour-select" className="hour-picker-label">Sample Hour (24h):</label>
+              <select
+                id="hour-select"
+                className="hour-picker-select"
+                value={selectedHour}
+                onChange={(e) => setSelectedHour(parseInt(e.target.value, 10))}
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>
+                    {i.toString().padStart(2, '0')}:00
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="button" className="take-sample" onClick={saveSampleRecord} disabled={saving}>
+              {saving ? 'Saving…' : 'Take Sample Now'}
+            </button>
+          </div>
           {saveInfo && <div className="save-info muted">{saveInfo}</div>}
         </div>
       </div>

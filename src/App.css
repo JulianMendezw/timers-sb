@@ -69,4 +69,24 @@ body {
   /* grows to push footer to the bottom */
 }
 
+.app-toast-container {
+  width: 192px;
+}
+
+.app-toast {
+  min-height: 38px;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+}
+
+.app-toast .Toastify__toast-body {
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+}
+
+.app-toast-progress {
+  height: 2px;
+}
+
 /* --- end essentials --- */

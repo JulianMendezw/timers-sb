@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import { supabase } from '../../../lib/supabaseClient';
 import { useClock } from '../../../hooks/useClock';
 import { useBeep } from '../../../hooks/useBeep';
@@ -29,6 +30,8 @@ export type UseTimersReturn = {
     soundOn: boolean;
     isUnlocked: boolean;
     nowStr: string;
+    theme: 'light' | 'dark';
+    toggleTheme: () => void;
 
     // actions
     openModal: (label: Label, current: string) => void;
@@ -70,6 +73,15 @@ export function useTimers(): UseTimersReturn {
     const nowStr = useClock(false);
     const { beep, unlock, isUnlocked } = useBeep();
     const [soundOn, setSoundOn] = useState(true);
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        try {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'light' || saved === 'dark') return saved;
+        } catch {
+            /* ignore */
+        }
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    });
     const prevDueRef = useRef<Label[]>([]);
 
     const tones: Record<Label, number> = {
@@ -77,6 +89,13 @@ export function useTimers(): UseTimersReturn {
         evals: 740,
         md: 660,
         samples: 520,
+    };
+
+    const timerDisplayNames: Record<Label, string> = {
+        kernel: 'Kernel',
+        evals: 'Evals',
+        md: 'Metal & Grind',
+        samples: 'Samples',
     };
 
     const rowIdRef = useRef<string | number | null>(null);
@@ -313,20 +332,27 @@ export function useTimers(): UseTimersReturn {
 
     // Beep on newly-due timers
     useEffect(() => {
-        if (!soundOn) {
-            prevDueRef.current = dueTimers;
-            return;
-        }
-
         const prev = prevDueRef.current;
         const newlyDue = dueTimers.filter((label) => !prev.includes(label));
 
         if (newlyDue.length > 0) {
-            const labelStaggerMs = 240;
-            newlyDue.slice(0, 4).forEach((label, idx) => {
-                const freq = tones[label] ?? 880;
-                playTripleBeep(freq, idx * labelStaggerMs);
+            newlyDue.slice(0, 4).forEach((label) => {
+                toast.info(`${timerDisplayNames[label]} is due now`, {
+                    toastId: `due-${label}`,
+                    autoClose: 10000,
+                    closeOnClick: false,
+                    draggable: false,
+                    closeButton: false,
+                });
             });
+
+            if (soundOn) {
+                const labelStaggerMs = 240;
+                newlyDue.slice(0, 4).forEach((label, idx) => {
+                    const freq = tones[label] ?? 880;
+                    playTripleBeep(freq, idx * labelStaggerMs);
+                });
+            }
         }
 
         prevDueRef.current = dueTimers;
@@ -341,6 +367,23 @@ export function useTimers(): UseTimersReturn {
         if (!isUnlocked) await unlock();
         setSoundOn((v) => !v);
     };
+
+    // Theme management: persist and apply to document
+    const applyTheme = (t: 'light' | 'dark') => {
+        try {
+            document.documentElement.dataset.theme = t;
+            localStorage.setItem('theme', t);
+        } catch {
+            /* ignore */
+        }
+    };
+
+    // initialize theme on mount and whenever it changes
+    useEffect(() => {
+        applyTheme(theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
 
     return {
         kernelTime,
@@ -364,5 +407,7 @@ export function useTimers(): UseTimersReturn {
         saveFromModal,
         nextTest,
         toggleSound,
+        theme,
+        toggleTheme,
     };
 }

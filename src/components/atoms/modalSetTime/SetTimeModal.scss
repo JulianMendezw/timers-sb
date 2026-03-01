@@ -8,12 +8,12 @@
   background: rgba(0, 0, 0, .5);
   z-index: 1000;
 
-  /* Theme tokens */
-  --stm-bg: #fff;
-  --stm-fg: #111;
-  --stm-border: #d0d5dd;
-  --stm-btn-bg: #f5f7fb;
-  --stm-accent: #2563eb;
+  /* Theme tokens mapped to global tokens so themes apply consistently */
+  --stm-bg: var(--panel-bg, #fff);
+  --stm-fg: var(--text, #111);
+  --stm-border: var(--color-border, #d0d5dd);
+  --stm-btn-bg: var(--input-bg, #f5f7fb);
+  --stm-accent: var(--accent, #2563eb);
 
   .stm-modal {
     background: var(--stm-bg);
@@ -58,6 +58,7 @@
       border-radius: 8px;
       padding: .45rem .6rem;
       transition: border-color .12s ease-in-out, box-shadow .12s ease-in-out;
+      background: var(--stm-bg);
 
     }
 
@@ -104,25 +105,14 @@
       }
     }
 
-    .btn--primary {
+      .btn--primary {
       background: var(--stm-accent);
-      color: #fff;
+      color: var(--stm-fg);
       border-color: transparent;
     }
   }
 
-  @media (prefers-color-scheme: dark) {
-    --stm-bg: #0b0b0b;
-    --stm-fg: #fff;
-    --stm-border: #30363d;
-    --stm-btn-bg: #121418;
-    --stm-accent: #60a5fa;
-
-    .react-time-picker__wrapper {
-      background: #0b0b0b;
-      border-color: var(--stm-border);
-    }
-  }
+  /* Theme-aware: global tokens control light/dark via html[data-theme] */
 }
 
 @keyframes stm-pop {
