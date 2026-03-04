@@ -311,12 +311,14 @@ export function useExtraSample() {
       const sel = visibleSuggestions[focusedIndex >= 0 ? focusedIndex : 0];
       if (!sel) return;
       const dbKey = sel.item_number ?? sel.id;
+      const nextActive = activeIds.includes(dbKey) ? activeIds : [...activeIds, dbKey];
       setExtraId((cur) => (cur === sel.id ? null : sel.id));
-      setActiveIds((cur) => (cur.includes(dbKey) ? cur : [...cur, dbKey]));
+      setActiveIds(nextActive);
       try {
         setShowSuggestions(false);
         setInputFocused(false);
         await setActiveProduct(dbKey, true);
+        await setProductOrder(nextActive);
       } catch (err) {
         console.error('Failed persisting Enter selection', err);
         setSaveInfo('Server save failed');
@@ -708,12 +710,16 @@ export function useExtraSample() {
   const handleSuggestionToggleActive = (p: Product, isActive: boolean) => {
     const dbKey = p.item_number ?? p.id;
     const willBeActive = !isActive;
-    setActiveIds((cur) => (cur.includes(dbKey) ? cur.filter((id) => id !== dbKey) : [...cur, dbKey]));
+    const nextActive = willBeActive
+      ? (activeIds.includes(dbKey) ? activeIds : [...activeIds, dbKey])
+      : activeIds.filter((id) => id !== dbKey);
+    setActiveIds(nextActive);
     if (willBeActive) setExtraId(p.id);
 
     void (async () => {
       try {
         await setActiveProduct(dbKey, willBeActive);
+        await setProductOrder(nextActive);
       } catch (err) {
         console.error('Failed persisting active toggle', err);
         setSaveInfo('Server save failed');
@@ -736,10 +742,12 @@ export function useExtraSample() {
 
   const handleRemoveActive = (id: string) => {
     const dbKey = id;
-    setActiveIds((cur) => cur.filter((x) => x !== id));
+    const nextActive = activeIds.filter((x) => x !== id);
+    setActiveIds(nextActive);
     void (async () => {
       try {
         await setActiveProduct(dbKey, false);
+        await setProductOrder(nextActive);
       } catch (err) {
         console.error('Failed persisting remove', err);
         setSaveInfo('Server remove failed');

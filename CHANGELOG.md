@@ -1,4 +1,10 @@
 # Changelog
+## Unreleased
+
+### Bug Fixes
+
+* add one-time SQL repair to normalize `active_products.sort_order` and stop legacy active-list reordering (`sql/normalize_active_products_sort_order.sql`)
+
 ## 1.7.0 (2026-03-04)
 
 

@@ -9,6 +9,8 @@ type ActiveProductRow = {
   updated_at?: string | null;
 };
 
+let activeSortRepairInFlight: Promise<void> | null = null;
+
 function getSupabaseRestConfig() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY as string | undefined;
@@ -69,20 +71,67 @@ async function upsertActiveProductsRows(rows: ActiveProductRow[]): Promise<void>
   }
 }
 
+function activeRowComparator(a: ActiveProductRow, b: ActiveProductRow): number {
+  const aSort = typeof a.sort_order === 'number' ? a.sort_order : Number.MAX_SAFE_INTEGER;
+  const bSort = typeof b.sort_order === 'number' ? b.sort_order : Number.MAX_SAFE_INTEGER;
+  if (aSort !== bSort) return aSort - bSort;
+
+  const aUpdatedAt = a.updated_at ? Date.parse(a.updated_at) : Number.NaN;
+  const bUpdatedAt = b.updated_at ? Date.parse(b.updated_at) : Number.NaN;
+  const aTime = Number.isNaN(aUpdatedAt) ? Number.MAX_SAFE_INTEGER : aUpdatedAt;
+  const bTime = Number.isNaN(bUpdatedAt) ? Number.MAX_SAFE_INTEGER : bUpdatedAt;
+  if (aTime !== bTime) return aTime - bTime;
+
+  return String(a.item_id).localeCompare(String(b.item_id));
+}
+
+function getSortedActiveRows(rows: ActiveProductRow[]): ActiveProductRow[] {
+  return rows
+    .filter((r) => r.item_id && r.is_active === true)
+    .sort(activeRowComparator);
+}
+
+function hasHealthySortOrder(activeRows: ActiveProductRow[]): boolean {
+  if (activeRows.length === 0) return true;
+  return activeRows.every((row, idx) => typeof row.sort_order === 'number' && Number.isFinite(row.sort_order) && row.sort_order === idx);
+}
+
+async function ensureActiveSortOrder(rows: ActiveProductRow[]): Promise<ActiveProductRow[]> {
+  const sortedActive = getSortedActiveRows(rows);
+  if (hasHealthySortOrder(sortedActive)) return sortedActive;
+
+  if (activeSortRepairInFlight) {
+    await activeSortRepairInFlight;
+    return sortedActive.map((row, idx) => ({ ...row, sort_order: idx }));
+  }
+
+  const now = new Date().toISOString();
+  const normalizedRows: ActiveProductRow[] = sortedActive.map((row, idx) => ({
+    item_id: row.item_id,
+    sort_order: idx,
+    updated_at: now,
+  }));
+
+  activeSortRepairInFlight = upsertActiveProductsRows(normalizedRows)
+    .catch((err) => {
+      console.warn('Failed automatic active_products sort_order normalization', err);
+    })
+    .finally(() => {
+      activeSortRepairInFlight = null;
+    });
+
+  await activeSortRepairInFlight;
+  return sortedActive.map((row, idx) => ({ ...row, sort_order: idx }));
+}
+
 /**
  * Fetch active product item_ids from `active_products` table, ordered by sort_order.
  */
 export async function fetchActiveProductIds(): Promise<string[]> {
   try {
     const rows = await readActiveProductsRows();
-    return rows
-      .filter((r) => r.item_id && r.is_active === true)
-      .sort((a, b) => {
-        const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
-        const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
-        return aSort - bSort;
-      })
-      .map((r) => r.item_id);
+    const activeRows = await ensureActiveSortOrder(rows);
+    return activeRows.map((r) => r.item_id);
   } catch (err) {
     console.error('fetchActiveProductIds exception', err);
     return [];
@@ -94,9 +143,24 @@ export async function fetchActiveProductIds(): Promise<string[]> {
  */
 export async function setActiveProduct(item_id: string, is_active: boolean, updated_by?: string | null) {
   try {
+    let nextSortOrder: number | null = null;
+    if (is_active) {
+      const rows = await readActiveProductsRows();
+      const existing = rows.find((row) => row.item_id === item_id);
+      if (typeof existing?.sort_order === 'number') {
+        nextSortOrder = existing.sort_order;
+      } else {
+        const maxSort = rows
+          .filter((row) => row.is_active === true && row.item_id !== item_id && typeof row.sort_order === 'number')
+          .reduce((max, row) => Math.max(max, row.sort_order as number), -1);
+        nextSortOrder = maxSort + 1;
+      }
+    }
+
     const payload: ActiveProductRow = {
       item_id,
       is_active,
+      ...(is_active ? { sort_order: nextSortOrder } : {}),
       updated_by: updated_by ?? null,
       updated_at: new Date().toISOString(),
     };
