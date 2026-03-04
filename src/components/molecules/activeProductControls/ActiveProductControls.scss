@@ -1,0 +1,96 @@
+.active-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.availability {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  cursor: pointer;
+  width: 40px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.availability.available {
+  background: var(--available-bg, #e6ffed);
+  border-color: var(--available-border, #86efac);
+}
+
+.availability.unavailable {
+  background: var(--unavailable-bg, #fff1f2);
+  border-color: var(--unavailable-border, #fca5a5);
+}
+
+.set-extra {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  cursor: pointer;
+  min-width: 52px;
+  text-align: center;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.set-extra.selected {
+  background: var(--extra-badge-bg, #ff9fc0);
+  border-color: var(--extra-badge-bg, #ff9fc0);
+  color: var(--extra-badge-text, #3b021a);
+}
+
+.set-extra[disabled] {
+  opacity: 1;
+  cursor: default;
+}
+
+.availability svg,
+.remove svg {
+  display: block;
+  color: var(--text);
+}
+
+.remove {
+  width: 40px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.availability.available svg {
+  color: var(--success, #10b981);
+}
+
+.availability.unavailable svg {
+  color: var(--danger, #ef4444);
+}
+
+.remove svg {
+  color: var(--danger, #ef4444);
+  width: 18px;
+  height: 18px;
+}
+
+.remove:hover {
+  filter: brightness(0.98);
+}
+
+.icon-remove {
+  width: 18px;
+  height: 18px;
+  color: var(--danger, #ef4444);
+}

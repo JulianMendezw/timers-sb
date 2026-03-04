@@ -1,0 +1,76 @@
+.product-main {
+  font-weight: 400;
+  font-family: var(--font-secondary, 'Montserrat', sans-serif);
+  font-size: 0.98rem;
+}
+
+.product-meta {
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--muted);
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-icon {
+  color: var(--success, #10b981);
+}
+
+.jar-icon {
+  color: var(--sunbutter-honey, #f6c343);
+  filter: drop-shadow(0 0 4px rgba(246, 195, 67, 0.55));
+  animation: jar-glow 2.4s ease-in-out infinite;
+}
+
+.jar-icon .icon-jar {
+  display: block;
+}
+
+.meta-recipe {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent, #1d4ed8);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.meta-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.meta-flag svg {
+  width: 18px;
+  height: 12px;
+  display: block;
+}
+
+@keyframes jar-glow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(246, 195, 67, 0.35));
+    transform: scale(1);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(246, 195, 67, 0.8));
+    transform: scale(1.05);
+  }
+}

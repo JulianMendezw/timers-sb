@@ -1,0 +1,46 @@
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  gap: 8px;
+  color: var(--text);
+}
+
+.suggestion-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+}
+
+.suggestion-main:hover {
+  background: transparent;
+}
+
+.suggestion-main.selected .product-main {
+  color: var(--accent);
+}
+
+.suggestion-add {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.suggestion-add.active {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--text);
+}
+
+.suggestion-item.focused {
+  background: rgba(255, 255, 255, 0.03);
+}

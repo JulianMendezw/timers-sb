@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { supabase } from '../../../lib/supabaseClient';
 import { useClock } from '../../../hooks/useClock';
@@ -11,6 +11,47 @@ import {
 } from '../../../utils/timeUtils';
 
 type Label = 'kernel' | 'evals' | 'md' | 'samples';
+
+type TimerRow = {
+    id?: string | number | null;
+    kernel_time?: string | null;
+    kernel_am?: boolean | null;
+    evals_time?: string | null;
+    evals_am?: boolean | null;
+    md_time?: string | null;
+    md_am?: boolean | null;
+    samples_time?: string | null;
+    samples_am?: boolean | null;
+};
+
+type TimerPayload = {
+    kernel_time: string | null;
+    kernel_am: boolean | null;
+    evals_time: string | null;
+    evals_am: boolean | null;
+    md_time: string | null;
+    md_am: boolean | null;
+    samples_time: string | null;
+    samples_am: boolean | null;
+};
+
+type InsertTimerResult = {
+    id?: string | number | null;
+};
+
+const TONES: Record<Label, number> = {
+    kernel: 880,
+    evals: 740,
+    md: 660,
+    samples: 520,
+};
+
+const TIMER_DISPLAY_NAMES: Record<Label, string> = {
+    kernel: 'Kernel',
+    evals: 'Evals',
+    md: 'Metal & Grind',
+    samples: 'Samples',
+};
 
 export type UseTimersReturn = {
     // state
@@ -42,8 +83,7 @@ export type UseTimersReturn = {
         currentHHMM: string,
         setNextTime: (v: string) => void,
         label: Label,
-        phaseGetter: () => boolean | null,
-        phaseSetter: (v: boolean) => void
+        phaseGetter: () => boolean | null
     ) => Promise<void>;
     toggleSound: () => Promise<void>;
 };
@@ -84,23 +124,9 @@ export function useTimers(): UseTimersReturn {
     });
     const prevDueRef = useRef<Label[]>([]);
 
-    const tones: Record<Label, number> = {
-        kernel: 880,
-        evals: 740,
-        md: 660,
-        samples: 520,
-    };
-
-    const timerDisplayNames: Record<Label, string> = {
-        kernel: 'Kernel',
-        evals: 'Evals',
-        md: 'Metal & Grind',
-        samples: 'Samples',
-    };
-
     const rowIdRef = useRef<string | number | null>(null);
 
-    const playTripleBeep = (frequency: number, startOffsetMs = 0) => {
+    const playTripleBeep = useCallback((frequency: number, startOffsetMs = 0) => {
         const pipMs = 120;
         const gapMs = 250;
         const volume = 100;
@@ -109,9 +135,9 @@ export function useTimers(): UseTimersReturn {
                 beep({ freq: frequency, duration: pipMs / 1000, volume });
             }, startOffsetMs + i * (pipMs + gapMs));
         });
-    };
+    }, [beep]);
 
-    const buildPayloadFromState = (overrides: Partial<Record<string, any>> = {}) => ({
+    const buildPayloadFromState = (overrides: Partial<TimerPayload> = {}): TimerPayload => ({
         kernel_time: kernelTime || null,
         kernel_am: kernelAM,
         evals_time: evalsTime || null,
@@ -123,7 +149,7 @@ export function useTimers(): UseTimersReturn {
         ...overrides,
     });
 
-    const saveToDB = async (overrides: Partial<Record<string, any>> = {}) => {
+    const saveToDB = async (overrides: Partial<TimerPayload> = {}) => {
         try {
             const payload = buildPayloadFromState(overrides);
             if (rowIdRef.current) {
@@ -134,7 +160,7 @@ export function useTimers(): UseTimersReturn {
                 if (error) {
                     console.error('Supabase insert error:', error);
                 } else {
-                    rowIdRef.current = (data as any)?.id ?? null;
+                    rowIdRef.current = (data as InsertTimerResult | null)?.id ?? null;
                 }
             }
         } catch (err) {
@@ -142,34 +168,39 @@ export function useTimers(): UseTimersReturn {
         }
     };
 
-    const loadFromDB = async () => {
+    const applyTimerRow = useCallback((data: TimerRow) => {
+        rowIdRef.current = data.id ?? null;
+        setKernelTime(data.kernel_time ?? '00:00');
+        setKernelAM(data.kernel_am ?? null);
+        setEvalsTime(data.evals_time ?? '00:00');
+        setEvalsAM(data.evals_am ?? null);
+        setMdTime(data.md_time ?? '00:00');
+        setMdAM(data.md_am ?? null);
+        setSamplesTime(data.samples_time ?? '00:00');
+        setSamplesAM(data.samples_am ?? null);
+    }, []);
+
+    const loadFromDB = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('timers').select('*').limit(1).single();
+            const { data, error } = await supabase.from('timers').select('*').order('id', { ascending: false }).limit(1).maybeSingle();
             if (error) {
-                console.info('No timers row found or error loading timers:', (error as any).message ?? error);
+                const message = (error as { message?: string })?.message ?? error;
+                console.info('No timers row found or error loading timers:', message);
                 return;
             }
             if (data) {
-                rowIdRef.current = (data as any).id ?? null;
-                setKernelTime(data.kernel_time ?? '00:00');
-                setKernelAM(data.kernel_am ?? null);
-                setEvalsTime(data.evals_time ?? '00:00');
-                setEvalsAM(data.evals_am ?? null);
-                setMdTime(data.md_time ?? '00:00');
-                setMdAM(data.md_am ?? null);
-                setSamplesTime(data.samples_time ?? '00:00');
-                setSamplesAM(data.samples_am ?? null);
+                applyTimerRow(data as TimerRow);
             }
         } catch (err) {
             console.error('Error loading timers from DB', err);
         }
-    };
+    }, [applyTimerRow]);
 
     const persistTimer = async (label: Label, time: string, am: boolean | null) => {
         const keyTime =
             label === 'kernel' ? 'kernel_time' : label === 'evals' ? 'evals_time' : label === 'md' ? 'md_time' : 'samples_time';
         const keyAm = label === 'kernel' ? 'kernel_am' : label === 'evals' ? 'evals_am' : label === 'md' ? 'md_am' : 'samples_am';
-        const overrides: Partial<Record<string, any>> = {};
+        const overrides: Partial<TimerPayload> = {};
         overrides[keyTime] = time;
         overrides[keyAm] = am;
         await saveToDB(overrides);
@@ -221,8 +252,7 @@ export function useTimers(): UseTimersReturn {
         currentHHMM: string,
         setNextTime: (v: string) => void,
         label: Label,
-        phaseGetter: () => boolean | null,
-        // phaseSetter: (v: boolean) => void
+        phaseGetter: () => boolean | null
     ) => {
         const baseHHMM = normalizeHHMM12(currentHHMM);
         const existingPhase = phaseGetter();
@@ -337,7 +367,7 @@ export function useTimers(): UseTimersReturn {
 
         if (newlyDue.length > 0) {
             newlyDue.slice(0, 4).forEach((label) => {
-                toast.info(`${timerDisplayNames[label]} is due now`, {
+                toast.info(`${TIMER_DISPLAY_NAMES[label]} is due now`, {
                     toastId: `due-${label}`,
                     autoClose: 10000,
                     closeOnClick: false,
@@ -349,19 +379,43 @@ export function useTimers(): UseTimersReturn {
             if (soundOn) {
                 const labelStaggerMs = 240;
                 newlyDue.slice(0, 4).forEach((label, idx) => {
-                    const freq = tones[label] ?? 880;
+                    const freq = TONES[label] ?? 880;
                     playTripleBeep(freq, idx * labelStaggerMs);
                 });
             }
         }
 
         prevDueRef.current = dueTimers;
-    }, [dueTimers, soundOn, beep]);
+    }, [dueTimers, soundOn, playTripleBeep]);
 
     // Load timers on mount
     useEffect(() => {
         loadFromDB();
-    }, []);
+
+        const channel = supabase
+            .channel('public:timers_live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'timers' }, (payload: { new?: TimerRow; record?: TimerRow }) => {
+                const record = payload?.new ?? payload?.record;
+                if (record) {
+                    applyTimerRow(record as TimerRow);
+                    return;
+                }
+
+                void loadFromDB();
+            })
+            .subscribe();
+
+        return () => {
+            void (async () => {
+                try {
+                    if (typeof supabase.removeChannel === 'function') await supabase.removeChannel(channel);
+                    else if (channel && typeof channel.unsubscribe === 'function') await channel.unsubscribe();
+                } catch (err) {
+                    console.warn('Failed to unsubscribe timers realtime channel', err);
+                }
+            })();
+        };
+    }, [applyTimerRow, loadFromDB]);
 
     const toggleSound = async () => {
         if (!isUnlocked) await unlock();

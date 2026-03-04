@@ -1,0 +1,115 @@
+.timer-block {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+  padding: 0rem 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 200;
+    text-align: left;
+    flex: 0 0 37%;
+  }
+
+  .time-display {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      opacity: 0.8;
+    }
+
+    .animated-time {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      font-weight: 400;
+      color: var(--text);
+      margin: 0.2rem;
+      font-variant-numeric: tabular-nums;
+
+      .blinking-colon {
+        animation: blink 2.5s infinite;
+      }
+
+      .ampm-badge {
+        margin-left: .35rem;
+        font-size: .65rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        color: var(--text);
+      }
+    }
+
+    .animated-time.highlight-red {
+      color: var(--accent);
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  .timer-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+
+    button {
+      width: 35px;
+      height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--input-bg);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      color: var(--text);
+
+      &:hover {
+        filter: brightness(0.96);
+      }
+    }
+  }
+}
+
+.kernel,
+.evals,
+.metalDetector,
+.samples {}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.2;
+  }
+}
