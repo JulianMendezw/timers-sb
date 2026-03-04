@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_as:
+        description: Release type override (optional)
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run release (auto)
+        if: github.event_name == 'push' || github.event.inputs.release_as == ''
+        run: npm run release
+
+      - name: Run release (manual override)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_as != ''
+        run: npm run release:${{ github.event.inputs.release_as }}
+
+      - name: Push release commit and tags
+        run: git push --follow-tags

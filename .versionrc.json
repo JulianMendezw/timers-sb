@@ -1,0 +1,25 @@
+{
+  "header": "# Changelog",
+  "types": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "refactor",
+      "section": "Refactors"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation"
+    },
+    {
+      "type": "chore",
+      "section": "Chores"
+    }
+  ]
+}

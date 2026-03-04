@@ -1,13 +1,20 @@
 {
   "name": "timers-sb",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "scaffold:component": "node scripts/scaffold-component.mjs",
+    "release": "standard-version",
+    "release:patch": "standard-version --release-as patch",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:first": "standard-version --first-release",
+    "release:dry-run": "standard-version --dry-run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
@@ -28,6 +35,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "standard-version": "^9.5.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
     "vite": "^7.0.4"
