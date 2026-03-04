@@ -1,9 +1,10 @@
 # Changelog
-## Unreleased
+## [1.8.0](https://github.com/JulianMendezw/timers-sb/compare/v1.7.0...v1.8.0) (2026-03-04)
 
-### Bug Fixes
 
-* add one-time SQL repair to normalize `active_products.sort_order` and stop legacy active-list reordering (`sql/normalize_active_products_sort_order.sql`)
+### Features
+
+* implement one-time SQL repair for active_products.sort_order normalization and update related logic ([dfde3bb](https://github.com/JulianMendezw/timers-sb/commit/dfde3bb31d196526058c1f6a6a7d4f5ec6be6382))
 
 ## 1.7.0 (2026-03-04)
 
