@@ -1,4 +1,11 @@
 # Changelog
+### [1.8.4](https://github.com/JulianMendezw/timers-sb/compare/v1.8.3...v1.8.4) (2026-03-05)
+
+
+### Features
+
+* sync rotation state on active products change and improve UTC timestamp handling ([25d91cd](https://github.com/JulianMendezw/timers-sb/commit/25d91cd81b729fafdc744dfb518f256929d1b5b5))
+
 ### [1.8.3](https://github.com/JulianMendezw/timers-sb/compare/v1.8.2...v1.8.3) (2026-03-05)
 
 ### [1.8.2](https://github.com/JulianMendezw/timers-sb/compare/v1.8.1...v1.8.2) (2026-03-05)
