@@ -126,6 +126,40 @@ export function useTimers(): UseTimersReturn {
 
     const rowIdRef = useRef<string | number | null>(null);
 
+    // Function to check which timers are currently due
+    const checkDueTimers = useCallback((times: {
+        kernelTime: string;
+        evalsTime: string;
+        mdTime: string;
+        samplesTime: string;
+        kernelAM: boolean | null;
+        evalsAM: boolean | null;
+        mdAM: boolean | null;
+        samplesAM: boolean | null;
+    }) => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const twelveHour = (hours % 12) || 12;
+        const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        const currentIsAM = hours < 12;
+
+        const due: Label[] = [];
+
+        const pushIfDue = (label: Label, t: string, phase: boolean | null) => {
+            if (!t) return;
+            const phaseMatches = phase == null ? true : phase === currentIsAM;
+            if (t === currentTime && phaseMatches) due.push(label);
+        };
+
+        pushIfDue('kernel', times.kernelTime, times.kernelAM);
+        pushIfDue('evals', times.evalsTime, times.evalsAM);
+        pushIfDue('md', times.mdTime, times.mdAM);
+        pushIfDue('samples', times.samplesTime, times.samplesAM);
+
+        setDueTimers(due);
+    }, []);
+
     const playTripleBeep = useCallback((frequency: number, startOffsetMs = 0) => {
         const pipMs = 120;
         const gapMs = 250;
@@ -294,36 +328,33 @@ export function useTimers(): UseTimersReturn {
 
     // Check timers due
     useEffect(() => {
-        const checkDueTimers = () => {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const twelveHour = (hours % 12) || 12;
-            const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-            const currentIsAM = hours < 12;
+        // Check immediately when dependencies change
+        checkDueTimers({
+            kernelTime,
+            evalsTime,
+            mdTime,
+            samplesTime,
+            kernelAM,
+            evalsAM,
+            mdAM,
+            samplesAM,
+        });
 
-            setDueTimers((prev) => {
-                const next = [...prev];
-
-                const pushIfDue = (label: Label, t: string, phase: boolean | null) => {
-                    if (!t) return;
-                    const phaseMatches = phase == null ? true : phase === currentIsAM;
-                    if (t === currentTime && phaseMatches && !next.includes(label)) next.push(label);
-                };
-
-                pushIfDue('kernel', kernelTime, kernelAM);
-                pushIfDue('evals', evalsTime, evalsAM);
-                pushIfDue('md', mdTime, mdAM);
-                pushIfDue('samples', samplesTime, samplesAM);
-
-                return next;
+        // Also check every 60 seconds as a fallback
+        const interval = setInterval(() => {
+            checkDueTimers({
+                kernelTime,
+                evalsTime,
+                mdTime,
+                samplesTime,
+                kernelAM,
+                evalsAM,
+                mdAM,
+                samplesAM,
             });
-        };
-
-        checkDueTimers();
-        const interval = setInterval(checkDueTimers, 60_000);
+        }, 60_000);
         return () => clearInterval(interval);
-    }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM]);
+    }, [kernelTime, evalsTime, mdTime, samplesTime, kernelAM, evalsAM, mdAM, samplesAM, checkDueTimers]);
 
     // Compute "next"
     useEffect(() => {
@@ -398,6 +429,18 @@ export function useTimers(): UseTimersReturn {
                 const record = payload?.new ?? payload?.record;
                 if (record) {
                     applyTimerRow(record as TimerRow);
+                    // Immediately check if any timers are due after remote update
+                    const timerRow = record as TimerRow;
+                    checkDueTimers({
+                        kernelTime: timerRow.kernel_time ?? '00:00',
+                        evalsTime: timerRow.evals_time ?? '00:00',
+                        mdTime: timerRow.md_time ?? '00:00',
+                        samplesTime: timerRow.samples_time ?? '00:00',
+                        kernelAM: timerRow.kernel_am ?? null,
+                        evalsAM: timerRow.evals_am ?? null,
+                        mdAM: timerRow.md_am ?? null,
+                        samplesAM: timerRow.samples_am ?? null,
+                    });
                     return;
                 }
 
@@ -415,7 +458,7 @@ export function useTimers(): UseTimersReturn {
                 }
             })();
         };
-    }, [applyTimerRow, loadFromDB]);
+    }, [applyTimerRow, loadFromDB, checkDueTimers]);
 
     const toggleSound = async () => {
         if (!isUnlocked) await unlock();

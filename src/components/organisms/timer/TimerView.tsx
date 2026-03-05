@@ -74,6 +74,7 @@ const TimerView: React.FC<Props> = ({
                             onClick={toggleSound}
                             title={soundOn ? 'Disable sound' : 'Enable sound'}
                             aria-pressed={soundOn}
+                            aria-label={soundOn ? 'Disable sound notifications' : 'Enable sound notifications'}
                         >
                             {soundOn ? <MdNotifications /> : <MdNotificationsOff />}
                         </button>

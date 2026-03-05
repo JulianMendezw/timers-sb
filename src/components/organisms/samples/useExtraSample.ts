@@ -404,6 +404,31 @@ export function useExtraSample() {
       setLastSampleAt(sampledAt);
       setLastSampleExtraKey(selectedExtraKey);
       setDebugActionFlags({ dragReorder: false, manualExtraSet: false });
+
+      // Fetch latest record from DB to sync across all devices
+      try {
+        const { fetchLatestSampleRecord } = await import('../../../lib/sampleRecordsClient');
+        const latest = await fetchLatestSampleRecord();
+        if (latest) {
+          setLastSampleAt(latest.sampled_at ?? latest.created_at ?? null);
+          let notesObj: Record<string, unknown> | null = null;
+          if (typeof latest.notes === 'string') {
+            try {
+              notesObj = JSON.parse(latest.notes) as Record<string, unknown>;
+            } catch {
+              notesObj = null;
+            }
+          } else if (latest.notes && typeof latest.notes === 'object') {
+            notesObj = latest.notes as Record<string, unknown>;
+          }
+          const selectedFromNotes = typeof notesObj?.selected_extra === 'string' ? notesObj.selected_extra : null;
+          const predictedFromNotes = typeof notesObj?.predicted_extra === 'string' ? notesObj.predicted_extra : null;
+          const selectedFromRow = latest.extra_product ?? null;
+          setLastSampleExtraKey(selectedFromNotes ?? selectedFromRow ?? predictedFromNotes ?? null);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch latest sample after save', err);
+      }
     } catch (err) {
       toast.error(`Save exception: ${String(err)}`);
     } finally {
@@ -516,7 +541,7 @@ export function useExtraSample() {
   }, [activeIds, products, availability, extraId]);
 
   useEffect(() => {
-    const unsubscribe = subscribeSampleRecords((row: SampleRecordRow | null) => {
+    const updateSampleData = (row: SampleRecordRow | null) => {
       const latest = row?.sampled_at ?? row?.created_at ?? null;
       setLastSampleAt(latest);
       let notesObj: Record<string, unknown> | null = null;
@@ -534,9 +559,22 @@ export function useExtraSample() {
       const predictedFromNotes = typeof notesObj?.predicted_extra === 'string' ? notesObj.predicted_extra : null;
       const selectedFromRow = row?.extra_product ?? null;
       setLastSampleExtraKey(selectedFromNotes ?? selectedFromRow ?? predictedFromNotes ?? null);
-    });
+    };
+
+    const unsubscribe = subscribeSampleRecords(updateSampleData);
+
+    // Fallback: periodically fetch latest sample to ensure sync across devices
+    const refreshInterval = setInterval(async () => {
+      try {
+        const latest = await import('../../../lib/sampleRecordsClient').then((m) => m.fetchLatestSampleRecord());
+        if (latest) updateSampleData(latest);
+      } catch (err) {
+        console.warn('Failed to refresh sample records', err);
+      }
+    }, 30_000); // Every 30 seconds
 
     return () => {
+      clearInterval(refreshInterval);
       try {
         if (typeof unsubscribe === 'function') void unsubscribe();
       } catch {
