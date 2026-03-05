@@ -1,4 +1,6 @@
 # Changelog
+### [1.8.1](https://github.com/JulianMendezw/timers-sb/compare/v1.8.0...v1.8.1) (2026-03-05)
+
 ## [1.8.0](https://github.com/JulianMendezw/timers-sb/compare/v1.7.0...v1.8.0) (2026-03-04)
 
 
