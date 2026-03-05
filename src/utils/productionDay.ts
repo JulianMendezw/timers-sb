@@ -102,20 +102,26 @@ export function getProductionDayKey(date: Date = new Date()): {
 }
 
 /**
- * Create a timestamp for a specific hour on the production day.
+ * Create a UTC timestamp for a specific hour on the production day.
  * 
  * @param hour - Hour in 24-hour format (0-23)
  * @param productionDayDate - The production day date (defaults to current production day)
- * @returns ISO timestamp string
+ * @returns ISO timestamp string (UTC)
  */
 export function getProductionDayTimestamp(hour: number, productionDayDate: Date = getProductionDay()): string {
-  const timestamp = new Date(productionDayDate);
+  // Use UTC to avoid timezone conversion issues
+  const year = productionDayDate.getUTCFullYear();
+  const month = productionDayDate.getUTCMonth();
+  const day = productionDayDate.getUTCDate();
+  
+  // Build the UTC date
+  const timestamp = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
   
   // If hour is 0-6, it's actually the next calendar day
   if (hour < PRODUCTION_DAY_END_HOUR) {
-    timestamp.setDate(timestamp.getDate() + 1);
+    timestamp.setUTCDate(timestamp.getUTCDate() + 1);
   }
   
-  timestamp.setHours(hour, 0, 0, 0);
+  timestamp.setUTCHours(hour, 0, 0, 0);
   return timestamp.toISOString();
 }

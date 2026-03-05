@@ -501,6 +501,50 @@ export function useExtraSample() {
     });
   }, [activeIds]);
 
+  // Sync rotation state when active products change
+  useEffect(() => {
+    if (!activeIds || activeIds.length === 0) return;
+
+    try {
+      const state = loadRotationState();
+      const active = Array.from(new Set(activeIds));
+      const lastSnap = state.lastActiveSnapshot ?? [];
+
+      // Detect if the active products set changed
+      const activeChanged =
+        lastSnap.length !== active.length ||
+        lastSnap.some((id) => !active.includes(id)) ||
+        active.some((id) => !lastSnap.includes(id));
+
+      if (!activeChanged) return;
+
+      // Prune pending and completed to only include current active products
+      const eligible = active.filter((id) => availability[id] !== false);
+      state.pending = state.pending.filter((id) => eligible.includes(id));
+      state.completed = state.completed.filter((id) => eligible.includes(id));
+
+      // Detect new products (not in lastActiveSnapshot)
+      const newProducts = active.filter((id) => !lastSnap.includes(id));
+      const newEligible = newProducts.filter((id) => availability[id] !== false);
+
+      // Remove new products from pending/completed so they get picked first on next sample
+      for (const newProd of newEligible) {
+        state.pending = state.pending.filter((id) => id !== newProd);
+        state.completed = state.completed.filter((id) => id !== newProd);
+      }
+
+      // Reorder to match activeIds order
+      state.pending.sort((a, b) => active.indexOf(a) - active.indexOf(b));
+      state.completed.sort((a, b) => active.indexOf(a) - active.indexOf(b));
+
+      // Update snapshot and persist
+      state.lastActiveSnapshot = active;
+      saveRotationState(state);
+    } catch (error) {
+      console.warn('Failed syncing rotation state on active products change', error);
+    }
+  }, [activeIds, availability]);
+
   useEffect(() => {
     if (!activeIds || activeIds.length === 0) return;
     if (!rotationInitializedRef.current) return;
