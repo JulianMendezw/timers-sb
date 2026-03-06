@@ -1,4 +1,11 @@
 # Changelog
+## [1.9.0](https://github.com/JulianMendezw/timers-sb/compare/v1.8.5...v1.9.0) (2026-03-06)
+
+
+### Features
+
+* add container_type to ProductSummaryData and useExtraSample; enhance timer handling in useTimers ([ce574fa](https://github.com/JulianMendezw/timers-sb/commit/ce574fa284087f2f0fae3947bafccf47266f8d4c))
+
 ### [1.8.5](https://github.com/JulianMendezw/timers-sb/compare/v1.8.4...v1.8.5) (2026-03-05)
 
 ### [1.8.4](https://github.com/JulianMendezw/timers-sb/compare/v1.8.3...v1.8.4) (2026-03-05)
