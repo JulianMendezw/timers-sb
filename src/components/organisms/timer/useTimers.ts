@@ -127,6 +127,7 @@ export function useTimers(): UseTimersReturn {
     const rowIdRef = useRef<string | number | null>(null);
 
     // Function to check which timers are currently due
+    // Adds newly due timers to the list without removing previously due ones
     const checkDueTimers = useCallback((times: {
         kernelTime: string;
         evalsTime: string;
@@ -144,12 +145,12 @@ export function useTimers(): UseTimersReturn {
         const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         const currentIsAM = hours < 12;
 
-        const due: Label[] = [];
+        const newlyDue: Label[] = [];
 
         const pushIfDue = (label: Label, t: string, phase: boolean | null) => {
             if (!t) return;
             const phaseMatches = phase == null ? true : phase === currentIsAM;
-            if (t === currentTime && phaseMatches) due.push(label);
+            if (t === currentTime && phaseMatches) newlyDue.push(label);
         };
 
         pushIfDue('kernel', times.kernelTime, times.kernelAM);
@@ -157,7 +158,17 @@ export function useTimers(): UseTimersReturn {
         pushIfDue('md', times.mdTime, times.mdAM);
         pushIfDue('samples', times.samplesTime, times.samplesAM);
 
-        setDueTimers(due);
+        // Add newly due timers without removing existing ones
+        // Timers are only removed when explicitly updated via saveFromModal or nextTest
+        if (newlyDue.length > 0) {
+            setDueTimers((prev) => {
+                const combined = [...prev];
+                for (const label of newlyDue) {
+                    if (!combined.includes(label)) combined.push(label);
+                }
+                return combined;
+            });
+        }
     }, []);
 
     const playTripleBeep = useCallback((frequency: number, startOffsetMs = 0) => {
@@ -429,7 +440,14 @@ export function useTimers(): UseTimersReturn {
                 const record = payload?.new ?? payload?.record;
                 if (record) {
                     applyTimerRow(record as TimerRow);
-                    // Immediately check if any timers are due after remote update
+                    // Clear due status for timers that were updated remotely
+                    // This ensures blue highlighting disappears when timer is updated from another device
+                    setDueTimers((prev) => {
+                        // Don't modify if no timers are due
+                        if (prev.length === 0) return prev;
+                        return prev; // Keep all due timers; they'll be cleared when explicitly updated
+                    });
+                    // Check if any timers are now due after remote update
                     const timerRow = record as TimerRow;
                     checkDueTimers({
                         kernelTime: timerRow.kernel_time ?? '00:00',

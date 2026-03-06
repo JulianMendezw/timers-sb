@@ -4,6 +4,7 @@ import './ProductSummary.scss';
 export type ProductSummaryData = {
   line_number?: string | number;
   metal_detector?: string | boolean;
+  container_type?: string | null;
   country_code?: string;
   special_sampling_flag?: boolean;
   special_recipe_flag?: boolean;
@@ -79,6 +80,7 @@ const ProductSummary: React.FC<ProductSummaryProps> = ({ product, main }) => {
           <span className="meta-item">Line {product.line_number}</span>
         )}
         {metalLabel && <span className="meta-item">{metalLabel}</span>}
+        {product.container_type && <span className="meta-item">{product.container_type}</span>}
         <CountryFlag code={product.country_code} />
         {product.special_sampling_flag && (
           <span className="meta-item meta-icon jar-icon" title="Special sampling" aria-label="Special sampling">

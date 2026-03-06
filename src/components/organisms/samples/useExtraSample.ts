@@ -26,6 +26,7 @@ export type Product = ProductSummaryData & {
   unit_size?: number | string | null;
   unit_size_uom?: string | null;
   container_1?: string | null;
+  container_type?: string | null;
   product_name?: string;
   name?: string;
   item_number?: string;
@@ -45,6 +46,40 @@ const formatPackSize = (packCountRaw?: number | string | null, unitSizeRaw?: num
     : `${unitSize}${uom ? ` ${uom}` : ''}`;
   if (Number.isFinite(packCount) && packCount > 1) return `${packCount}x ${sizeText}`;
   return sizeText;
+};
+
+const DEVICE_DEBUG_STORAGE_KEY = 'samples_device_debug_id_v1';
+
+const getOrCreateDeviceDebugId = () => {
+  try {
+    const existing = localStorage.getItem(DEVICE_DEBUG_STORAGE_KEY);
+    if (existing && existing.trim()) return existing;
+
+    const id = `dev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    localStorage.setItem(DEVICE_DEBUG_STORAGE_KEY, id);
+    return id;
+  } catch {
+    return `dev-ephemeral-${Date.now().toString(36)}`;
+  }
+};
+
+const getDeviceDebugInfo = () => {
+  const uaData = (navigator as Navigator & {
+    userAgentData?: { platform?: string; brands?: Array<{ brand: string; version: string }>; mobile?: boolean };
+  }).userAgentData;
+
+  const brands = uaData?.brands?.map((b) => `${b.brand}/${b.version}`) ?? [];
+
+  return {
+    device_id: getOrCreateDeviceDebugId(),
+    user_agent: navigator.userAgent,
+    platform: uaData?.platform ?? navigator.platform ?? 'unknown',
+    browser_brands: brands,
+    mobile: uaData?.mobile ?? /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
+    language: navigator.language,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    saved_at_client_iso: new Date().toISOString(),
+  };
 };
 
 export const formatMainLine = (p: Product) => {
@@ -94,6 +129,7 @@ export function useExtraSample() {
               unit_size: (r.unit_size as number | string | null) ?? (r.unitSize as number | string | null) ?? null,
               unit_size_uom: (r.unit_size_uom as string | null) ?? (r.unitSizeUom as string | null) ?? null,
               container_1: (r.container_1 as string | null) ?? (r.container as string | null) ?? null,
+              container_type: (r.container_type as string | null) ?? (r.containerType as string | null) ?? null,
               product_name: (r.description as string | undefined) ?? (r.product_name as string | undefined) ?? (r.name as string | undefined) ?? (r.product as string | undefined) ?? (r.itemNumber as string | undefined) ?? (r.item_number as string | undefined),
               name: (r.description as string | undefined) ?? (r.name as string | undefined) ?? (r.product_name as string | undefined) ?? (r.product as string | undefined),
               item_number: String(r.item_id ?? r.item_number ?? r.itemNumber ?? r.id ?? ''),
@@ -147,6 +183,7 @@ export function useExtraSample() {
           unit_size: (r.unit_size as number | string | null) ?? (r.unitSize as number | string | null) ?? null,
           unit_size_uom: (r.unit_size_uom as string | null) ?? (r.unitSizeUom as string | null) ?? null,
           container_1: (r.container_1 as string | null) ?? (r.container as string | null) ?? null,
+          container_type: (r.container_type as string | null) ?? (r.containerType as string | null) ?? null,
           product_name: (r.description as string | undefined) ?? (r.product_name as string | undefined) ?? (r.name as string | undefined) ?? (r.product as string | undefined) ?? (r.itemNumber as string | undefined) ?? (r.item_number as string | undefined),
           name: (r.description as string | undefined) ?? (r.name as string | undefined) ?? (r.product_name as string | undefined) ?? (r.product as string | undefined),
           item_number: String(r.item_id ?? r.item_number ?? r.itemNumber ?? r.id ?? ''),
@@ -391,6 +428,7 @@ export function useExtraSample() {
           selected_extra: extra ? (extra.item_number ? stripItemNumberPrefix(extra.item_number) : (extra.product_name ?? extra.id)) : null,
           drag_reorder_since_last_sample: debugActionFlags.dragReorder,
           manual_set_extra_since_last_sample: debugActionFlags.manualExtraSet,
+          device: getDeviceDebugInfo(),
         }),
       };
 
@@ -585,9 +623,21 @@ export function useExtraSample() {
   }, [activeIds, products, availability, extraId]);
 
   useEffect(() => {
+    let mounted = true;
+
     const updateSampleData = (row: SampleRecordRow | null) => {
+      if (!mounted) return;
+      
       const latest = row?.sampled_at ?? row?.created_at ?? null;
-      setLastSampleAt(latest);
+      setLastSampleAt((prev) => {
+        // Force update even if value appears the same to ensure UI refresh
+        if (prev !== latest) {
+          console.log('Sample timestamp updated:', latest);
+          return latest;
+        }
+        return prev;
+      });
+      
       let notesObj: Record<string, unknown> | null = null;
       if (typeof row?.notes === 'string') {
         try {
@@ -609,15 +659,17 @@ export function useExtraSample() {
 
     // Fallback: periodically fetch latest sample to ensure sync across devices
     const refreshInterval = setInterval(async () => {
+      if (!mounted) return;
       try {
         const latest = await import('../../../lib/sampleRecordsClient').then((m) => m.fetchLatestSampleRecord());
         if (latest) updateSampleData(latest);
       } catch (err) {
         console.warn('Failed to refresh sample records', err);
       }
-    }, 30_000); // Every 30 seconds
+    }, 15_000); // Every 15 seconds (increased frequency for better sync)
 
     return () => {
+      mounted = false;
       clearInterval(refreshInterval);
       try {
         if (typeof unsubscribe === 'function') void unsubscribe();
