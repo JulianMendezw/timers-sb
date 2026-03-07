@@ -817,7 +817,12 @@ export function useExtraSample() {
     if (!lastSampleAt) return 'No sample recorded yet';
     const dt = new Date(lastSampleAt);
     if (Number.isNaN(dt.getTime())) return `Last sample: ${lastSampleAt}`;
-    return `Last sample: ${dt.toLocaleString()}`;
+    
+    // Display in UTC to match the actual sample hour_code
+    const dateStr = dt.toLocaleDateString();
+    const hours = dt.getUTCHours().toString().padStart(2, '0');
+    const minutes = dt.getUTCMinutes().toString().padStart(2, '0');
+    return `Last sample: ${dateStr} ${hours}:${minutes}`;
   }, [lastSampleAt]);
 
   const handleSearchChange = (value: string) => {
