@@ -117,26 +117,49 @@ Recommended creation flow:
 
 ## Releases and Changelog
 
-This project now uses `standard-version` to keep semantic versioning and `CHANGELOG.md` in sync.
+This project uses **automated versioning** with conventional commits. When you merge to `main`, the version and changelog are automatically updated based on your commit messages.
 
-- Dry run: `npm run release:dry-run`
-- Patch release: `npm run release:patch`
-- Minor release: `npm run release:minor`
-- Major release: `npm run release:major`
+### How It Works
 
-Local-only update without creating git commit/tag:
+1. **Use conventional commit messages** in your feature branches:
+  - `fix:` → patch version bump (1.0.0 → 1.0.1)
+  - `feat:` → minor version bump (1.0.0 → 1.1.0)
+  - `BREAKING CHANGE:` → major version bump (1.0.0 → 2.0.0)
+  - `refactor:`, `docs:`, `chore:` → included in changelog, patch bump
+
+2. **Merge to `main`** → GitHub Actions automatically:
+  - Analyzes all commits since the last release
+  - Determines the version bump (patch/minor/major)
+  - Updates `package.json` and `CHANGELOG.md`
+  - Creates a git tag and pushes everything
+  - Triggers Netlify deployment
+
+### Commit Message Examples
 
 ```bash
-npm run release:minor -- --skip.commit --skip.tag
+git commit -m "feat: add new timer pause functionality"
+git commit -m "fix: resolve timer display bug"
+git commit -m "refactor: simplify product rotation logic"
+git commit -m "feat: add export feature
+
+BREAKING CHANGE: changes API response format"
 ```
 
-Release skill guide:
+### Manual Override (Optional)
+
+If you need to manually trigger a release or run locally:
+
+```bash
+npm run release:dry-run    # Preview changes
+npm run release:patch      # Force patch release
+npm run release:minor      # Force minor release
+npm run release:major      # Force major release
+```
+
+Or trigger manually via GitHub Actions tab with version override.
+
+### Reference
 
 - `.github/skills/release-versioning/SKILL.md`
-
-Automatic GitHub release workflow:
-
 - Workflow file: `.github/workflows/release.yml`
-- Runs on every push to `main` and pushes release commit + tags.
-- Manual run supported via Actions tab with `release_as` override (`patch`, `minor`, `major`).
-- PR preview workflow: `.github/workflows/release-dry-run.yml` (runs `npm run release:dry-run` on pull requests to `main`).
+- Config: `.versionrc.json`

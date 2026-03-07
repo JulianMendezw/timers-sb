@@ -21,7 +21,9 @@
     width: min(92vw, 340px);
     padding: 1.5rem;
     border-radius: 12px;
-    font-weight: 300;
+    font-family: var(--font-secondary, 'Montserrat', sans-serif);
+    font-weight: 500;
+    border: 1px solid color-mix(in oklab, var(--stm-border) 80%, transparent);
     box-shadow:
       0 10px 25px rgba(0, 0, 0, .15),
       0 1px 2px rgba(0, 0, 0, .05);
@@ -35,50 +37,78 @@
 
   .stm-title {
     margin: 0 0 .25rem 0;
-    font-size: 1.1rem;
-    letter-spacing: .04em;
+    font-family: var(--font-primary, 'Suez One', serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
   }
 
   .stm-label {
     display: block;
-    font-size: .9rem;
-    opacity: .8;
-    margin-top: .25rem;
+    font-family: var(--font-secondary, 'Montserrat', sans-serif);
+    font-size: .95rem;
+    font-weight: 500;
+    opacity: .85;
+    margin-top: .35rem;
   }
 
   .stm-picker {
     margin-top: .5rem;
 
-    .react-time-picker {
+    #stm-time-input {
+      text-align: center;
       width: 100%;
-    }
-
-    .react-time-picker__wrapper {
       border: 1.5px solid var(--stm-border);
       border-radius: 8px;
-      padding: .45rem .6rem;
-      transition: border-color .12s ease-in-out, box-shadow .12s ease-in-out;
+      height: 42px;
+      padding: .45rem .75rem;
+      transition: border-color .12s ease-in-out, box-shadow .12s ease-in-out, background-color .12s ease-in-out;
       background: var(--stm-bg);
-
-    }
-
-    .react-time-picker__inputGroup {
-      font-weight: 400;
-      font-size: 1.25rem;
-      gap: .25rem;
-    }
-
-    .react-time-picker__inputGroup__input {
-      text-align: center;
-      min-width: 1.8ch;
+      font-family: var(--font-secondary, 'Montserrat', sans-serif);
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: .02em;
+      color: var(--stm-fg);
 
       &:focus-visible {
         outline: none;
       }
+
+      &:focus,
+      &:focus-visible {
+        outline: none;
+      }
+
+      &:focus-within,
+      &:focus {
+        border-color: var(--stm-accent);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--stm-accent) 25%, transparent);
+      }
     }
 
-    /* Focus ring */
-    .react-time-picker__wrapper:focus-within {
+    #stm-time-input::-webkit-calendar-picker-indicator {
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    #stm-time-input::-webkit-datetime-edit {
+      padding: 0;
+    }
+
+    #stm-time-input::-webkit-datetime-edit-hour-field,
+    #stm-time-input::-webkit-datetime-edit-minute-field {
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+
+    #stm-time-input::-webkit-datetime-edit-hour-field:focus,
+    #stm-time-input::-webkit-datetime-edit-minute-field:focus {
+      background: color-mix(in oklab, var(--stm-accent) 18%, transparent);
+      outline: none;
+    }
+
+    #stm-time-input:focus {
       border-color: var(--stm-accent);
       box-shadow: 0 0 0 2px color-mix(in oklab, var(--stm-accent) 25%, transparent);
     }
@@ -93,11 +123,22 @@
       flex: 1;
       padding: .6rem .8rem;
       font-size: 1rem;
+      font-family: var(--font-secondary, 'Montserrat', sans-serif);
+      font-weight: 700;
       cursor: pointer;
       border-radius: 8px;
       border: 1px solid var(--stm-border);
       background: var(--stm-btn-bg);
       color: inherit;
+      transition: transform .08s ease, filter .12s ease;
+
+      &:hover {
+        filter: brightness(1.03);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
 
       &:focus-visible {
         outline: 2px solid var(--stm-accent);
@@ -105,9 +146,9 @@
       }
     }
 
-      .btn--primary {
+    .btn--primary {
       background: var(--stm-accent);
-      color: var(--stm-fg);
+      color: #fff;
       border-color: transparent;
     }
   }

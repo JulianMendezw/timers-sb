@@ -126,6 +126,38 @@ export function useTimers(): UseTimersReturn {
 
     const rowIdRef = useRef<string | number | null>(null);
 
+    const getDueLabelsNow = useCallback((times: {
+        kernelTime: string;
+        evalsTime: string;
+        mdTime: string;
+        samplesTime: string;
+        kernelAM: boolean | null;
+        evalsAM: boolean | null;
+        mdAM: boolean | null;
+        samplesAM: boolean | null;
+    }): Label[] => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const twelveHour = (hours % 12) || 12;
+        const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        const currentIsAM = hours < 12;
+
+        const dueNow: Label[] = [];
+        const pushIfDue = (label: Label, t: string, phase: boolean | null) => {
+            if (!t) return;
+            const phaseMatches = phase == null ? true : phase === currentIsAM;
+            if (t === currentTime && phaseMatches) dueNow.push(label);
+        };
+
+        pushIfDue('kernel', times.kernelTime, times.kernelAM);
+        pushIfDue('evals', times.evalsTime, times.evalsAM);
+        pushIfDue('md', times.mdTime, times.mdAM);
+        pushIfDue('samples', times.samplesTime, times.samplesAM);
+
+        return dueNow;
+    }, []);
+
     // Function to check which timers are currently due
     // Adds newly due timers to the list without removing previously due ones
     const checkDueTimers = useCallback((times: {
@@ -138,25 +170,7 @@ export function useTimers(): UseTimersReturn {
         mdAM: boolean | null;
         samplesAM: boolean | null;
     }) => {
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-        const twelveHour = (hours % 12) || 12;
-        const currentTime = `${twelveHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        const currentIsAM = hours < 12;
-
-        const newlyDue: Label[] = [];
-
-        const pushIfDue = (label: Label, t: string, phase: boolean | null) => {
-            if (!t) return;
-            const phaseMatches = phase == null ? true : phase === currentIsAM;
-            if (t === currentTime && phaseMatches) newlyDue.push(label);
-        };
-
-        pushIfDue('kernel', times.kernelTime, times.kernelAM);
-        pushIfDue('evals', times.evalsTime, times.evalsAM);
-        pushIfDue('md', times.mdTime, times.mdAM);
-        pushIfDue('samples', times.samplesTime, times.samplesAM);
+        const newlyDue = getDueLabelsNow(times);
 
         // Add newly due timers without removing existing ones
         // Timers are only removed when explicitly updated via saveFromModal or nextTest
@@ -169,7 +183,7 @@ export function useTimers(): UseTimersReturn {
                 return combined;
             });
         }
-    }, []);
+    }, [getDueLabelsNow]);
 
     const playTripleBeep = useCallback((frequency: number, startOffsetMs = 0) => {
         const pipMs = 120;
@@ -440,16 +454,8 @@ export function useTimers(): UseTimersReturn {
                 const record = payload?.new ?? payload?.record;
                 if (record) {
                     applyTimerRow(record as TimerRow);
-                    // Clear due status for timers that were updated remotely
-                    // This ensures blue highlighting disappears when timer is updated from another device
-                    setDueTimers((prev) => {
-                        // Don't modify if no timers are due
-                        if (prev.length === 0) return prev;
-                        return prev; // Keep all due timers; they'll be cleared when explicitly updated
-                    });
-                    // Check if any timers are now due after remote update
                     const timerRow = record as TimerRow;
-                    checkDueTimers({
+                    setDueTimers(getDueLabelsNow({
                         kernelTime: timerRow.kernel_time ?? '00:00',
                         evalsTime: timerRow.evals_time ?? '00:00',
                         mdTime: timerRow.md_time ?? '00:00',
@@ -458,7 +464,7 @@ export function useTimers(): UseTimersReturn {
                         evalsAM: timerRow.evals_am ?? null,
                         mdAM: timerRow.md_am ?? null,
                         samplesAM: timerRow.samples_am ?? null,
-                    });
+                    }));
                     return;
                 }
 
@@ -476,7 +482,7 @@ export function useTimers(): UseTimersReturn {
                 }
             })();
         };
-    }, [applyTimerRow, loadFromDB, checkDueTimers]);
+    }, [applyTimerRow, loadFromDB, getDueLabelsNow]);
 
     const toggleSound = async () => {
         if (!isUnlocked) await unlock();

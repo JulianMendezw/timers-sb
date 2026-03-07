@@ -1,7 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import TimePicker from 'react-time-picker';
-import 'react-time-picker/dist/TimePicker.css';
-import 'react-clock/dist/Clock.css';
 import './SetTimeModal.scss';
 
 type Label = 'kernel' | 'evals' | 'md' | 'samples' | null;
@@ -23,6 +20,7 @@ const TimeModal: React.FC<TimeModalProps> = ({
 }) => {
   const [local, setLocal] = useState<string>(initialTime ?? '');
   const overlayRef = useRef<HTMLDivElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
 
   // Reset local value each time the modal opens or initialTime changes
   useEffect(() => {
@@ -57,9 +55,7 @@ const TimeModal: React.FC<TimeModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const id = requestAnimationFrame(() => {
-      const input = overlayRef.current?.querySelector<HTMLInputElement>(
-        '.react-time-picker__inputGroup input:not([disabled])'
-      );
+      const input = timeInputRef.current;
       input?.focus();
       input?.select?.();
     });
@@ -92,17 +88,13 @@ const TimeModal: React.FC<TimeModalProps> = ({
         </label>
 
         <div className="stm-picker">
-          <TimePicker
+          <input
             id="stm-time-input"
-            autoFocus                 // ✅ no JSX block comment here
+            ref={timeInputRef}
+            type="time"
+            step={60}
             value={local}
-            onChange={(value) => {
-              if (value !== null) setLocal(String(value));
-            }}
-            disableClock={true}
-            format="HH:mm"
-            clearIcon={null}
-            clockIcon={null}
+            onChange={(e) => setLocal(e.target.value)}
           />
         </div>
 
