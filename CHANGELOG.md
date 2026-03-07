@@ -1,4 +1,11 @@
 # Changelog
+### [1.10.1](https://github.com/JulianMendezw/timers-sb/compare/v1.10.0...v1.10.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* enhance time modal styling and functionality; refactor timer logic for clarity ([f3e2add](https://github.com/JulianMendezw/timers-sb/commit/f3e2addd1c57dcc61d5120962b913a0b686cc7b8))
+
 ## [1.10.0](https://github.com/JulianMendezw/timers-sb/compare/v1.9.0...v1.10.0) (2026-03-07)
 
 
