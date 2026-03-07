@@ -1,4 +1,11 @@
 # Changelog
+## [1.10.0](https://github.com/JulianMendezw/timers-sb/compare/v1.9.0...v1.10.0) (2026-03-07)
+
+
+### Features
+
+* update last sample display to show UTC time format ([faac982](https://github.com/JulianMendezw/timers-sb/commit/faac9829d717cfb6369c8b4a47519491a28430f0))
+
 ## [1.9.0](https://github.com/JulianMendezw/timers-sb/compare/v1.8.5...v1.9.0) (2026-03-06)
 
 
